@@ -25,10 +25,10 @@ class PerformanceScheduleService(
     fun createPerformanceSchedule(performanceScheduleRequest: PerformanceScheduleRequest) {
 
         val venue: Venue = venueRepository.findById(performanceScheduleRequest.venueId)
-            .orElseThrow { throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PLACE_INFO) }
+            .orElseThrow { ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PLACE_INFO) }
 
         val performance: Performance = performanceRepository.findById(performanceScheduleRequest.performanceId)
-            .orElseThrow { throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_INFO) }
+            .orElseThrow { ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_INFO) }
 
         performanceScheduleRepository.save(performanceScheduleRequest.toEntity(venue, performance))
     }
@@ -37,10 +37,9 @@ class PerformanceScheduleService(
         venueId: Long,
         performanceId: Long
     ): List<PerformanceScheduleResponse> {
-        val performanceScheduleList = performanceScheduleRepository.findPerformanceScheduleListByVenueIdAndPerformanceId(venueId, performanceId)
-            ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_SCHEDULE)
-
-        return performanceScheduleList.map(PerformanceScheduleResponse::from)
+        return performanceScheduleRepository.findPerformanceScheduleListByVenueIdAndPerformanceId(venueId, performanceId)
+            .ifEmpty { throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_SCHEDULE) }
+            .map(PerformanceScheduleResponse::from)
     }
 
     fun getPerformanceSchedule(performanceScheduleId: Long): PerformanceSchedule {
@@ -53,11 +52,10 @@ class PerformanceScheduleService(
     fun getPerformanceScheduleId(
         venueId: Long,
         performanceId: Long
-    ): Long? {
+    ): Long {
         val performanceSchedule = performanceScheduleRepository.findPerformanceScheduleByVenueIdAndPerformanceId(venueId, performanceId)
             ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_SCHEDULE)
 
-        log.info{performanceSchedule.id}
-        return performanceSchedule.id
+        return performanceSchedule.id!!
     }
 }

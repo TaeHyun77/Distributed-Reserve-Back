@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class VenueService(
     private val venueRepository: VenueRepository
-): Loggable {
+) {
 
     @Transactional
     fun createVenue(venueRequest: VenueRequest) {

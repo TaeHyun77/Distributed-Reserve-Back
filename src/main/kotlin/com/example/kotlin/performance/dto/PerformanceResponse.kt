@@ -15,7 +15,7 @@ data class PerformanceResponse(
 
     val price: Long,
 
-    val performanceScheduleList: List<PerformanceScheduleListResponse>? = null
+    val performanceScheduleList: List<PerformanceScheduleListResponse> = emptyList()
 ) {
     companion object {
         fun from(performance: Performance): PerformanceResponse {
@@ -27,8 +27,8 @@ data class PerformanceResponse(
                 price = performance.price,
                 performanceScheduleList = performance.performanceScheduleList.map { ps ->
                     PerformanceScheduleListResponse(
-                        venueId = ps.venue.id,
-                        performanceId = ps.performance.id,
+                        venueId = ps.venue.id!!,
+                        performanceId = ps.performance.id!!,
                         startTime = ps.startTime
                     )
                 }

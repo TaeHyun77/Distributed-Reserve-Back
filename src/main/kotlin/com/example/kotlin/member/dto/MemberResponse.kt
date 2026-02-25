@@ -36,17 +36,7 @@ data class MemberResponse(
                 lastRewardDate = member.lastRewardDate,
                 reward = member.reward,
                 credit = member.credit,
-                reserveList = member.reserveList?.map {
-                    ReserveResponse(
-                        reservationNumber = it.reservationNumber,
-                        reservedBy = member.username,
-                        totalAmount = it.totalAmount,
-                        rewardDiscountAmount = it.rewardDiscountAmount,
-                        finalAmount = it.finalAmount,
-                        createdAt = it.createdAt,
-                        reservedSeat = it.reservedSeat,
-                    )
-                }
+                reserveList = member.reserveList?.map { ReserveResponse.from(it) }
             )
         }
     }

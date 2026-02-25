@@ -3,7 +3,7 @@ package com.example.kotlin.venue.dto
 import com.example.kotlin.venue.Venue
 
 data class VenueResponse(
-    val id: Long? = null,
+    val id: Long,
 
     val name: String,
 
@@ -12,7 +12,7 @@ data class VenueResponse(
     companion object {
         fun from(venue: Venue): VenueResponse {
             return VenueResponse(
-                venue.id,
+                venue.id!!,
                 venue.name,
                 venue.location
             )

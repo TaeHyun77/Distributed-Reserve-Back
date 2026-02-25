@@ -1,9 +1,7 @@
 package com.example.kotlin.performance
 
-import com.example.kotlin.config.Loggable
 import com.example.kotlin.performance.dto.PerformanceRequest
 import com.example.kotlin.performance.dto.PerformanceResponse
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -15,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class PerformanceController(
     private val performanceService: PerformanceService
-): Loggable {
+) {
 
     @PostMapping("/create")
     fun createPerformance(@RequestBody performanceRequest: PerformanceRequest) {

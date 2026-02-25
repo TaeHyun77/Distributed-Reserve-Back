@@ -24,7 +24,7 @@ class Member(
 
     var credit: Long = 30000,
 
-    var reward: Long,
+    var reward: Long = 0L,
 
     var lastRewardDate: LocalDate? = null,
 
@@ -33,8 +33,15 @@ class Member(
 
 ): BaseTime() {
 
-    fun updateCreditAndReward(credit: Long, reward: Long) {
+    fun decreaseCreditAndReward(credit: Long, reward: Long) {
         this.credit -= credit
         this.reward -= reward
     }
+
+    fun increaseCreditAndReward(credit: Long, reward: Long) {
+        this.credit += credit
+        this.reward += reward
+    }
+
+    fun hasClaimedRewardToday(today: LocalDate) = lastRewardDate == today
 }

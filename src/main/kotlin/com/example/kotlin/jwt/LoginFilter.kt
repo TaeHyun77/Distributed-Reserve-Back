@@ -49,15 +49,15 @@ class LoginFilter(
         val email = userDetails.getEmail()
         val role = authentication.authorities.first().authority
 
-        val accessToken = jwtUtil.createToken(username, name, email, role,"access", 30 * 60 * 1000)
-        val refresh = jwtUtil.createToken(username, name, email, role,"refresh", 60 * 60 * 1000)
+        val accessToken = jwtUtil.createToken(username, name, email, role,"access", 600_000L)
+        val refresh = jwtUtil.createToken(username, name, email, role,"refresh", 86_400_000L)
 
         log.info { "accessToken $accessToken" }
         log.info { "refresh $refresh" }
 
-        createRefresh(username, refresh, 60 * 60 * 1000)
+        createRefresh(username, refresh, 86_400_000L)
 
-        response.setHeader("Authorization", accessToken)
+        response.setHeader("access", accessToken)
         response.addCookie(createCookie("refresh", refresh))
         response.status = HttpStatus.OK.value()
     }

@@ -18,20 +18,29 @@ class Seat(
     @Column(name = "seat_id")
     val id: Long? = null,
 
+    // 공연 정보
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "performanceSchedule_id")
     val performanceSchedule: PerformanceSchedule,
 
+    // 좌석의 예약 정보
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reserve_id")
     var reserve: Reserve? = null,
 
-    val seatNumber: String?,
-
-    var isReserved: Boolean
+    // 좌석 번호
+    val seatNumber: String,
 ) {
-    fun updateStatus(isReserved: Boolean, reserve: Reserve?) {
-        this.isReserved = isReserved
+    // 예약 여부
+    val isReserved: Boolean get() = reserve != null
+
+    // 좌석 점유
+    fun occupy(reserve: Reserve) {
         this.reserve = reserve
+    }
+
+    // 좌석 점유 해제
+    fun release() {
+        this.reserve = null
     }
 }

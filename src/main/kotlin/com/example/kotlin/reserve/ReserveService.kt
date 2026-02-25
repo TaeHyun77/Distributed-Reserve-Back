@@ -2,14 +2,15 @@ package com.example.kotlin.reserve
 
 import com.example.kotlin.config.Loggable
 import com.example.kotlin.member.Member
+import com.example.kotlin.member.MemberService
 import com.example.kotlin.performanceSchedule.PerformanceScheduleService
 import com.example.kotlin.reserve.dto.Refund
 import com.example.kotlin.reserve.dto.ReserveRequest
 import com.example.kotlin.reserve.dto.ReserveResponse
+import com.example.kotlin.reserve.repository.ReserveRepository
 import com.example.kotlin.reserveException.ErrorCode
 import com.example.kotlin.reserveException.ReserveException
-import com.example.kotlin.seat.Seat
-import com.example.kotlin.seat.repository.SeatRepository
+import com.example.kotlin.seat.SeatService
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,68 +18,65 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ReserveService(
     private val reserveRepository: ReserveRepository,
-    private val seatRepository: SeatRepository,
-    private val performanceScheduleService: PerformanceScheduleService
+    private val seatService: SeatService,
+    private val performanceScheduleService: PerformanceScheduleService,
+    private val memberService: MemberService
 ) : Loggable {
 
     @Transactional
     fun reserve(
         reserveRequest: ReserveRequest,
-        member: Member
+        username: String
     ): ReserveResponse {
+
+        // Redis 락 키는 좌석 단위이므로, 동일 사용자가 서로 다른 좌석을 동시에 예약하면 두 요청이 병렬로 실행될 수 있습니다.
+        // 이 경우 credit을 각자 읽어 중복 차감되는 문제가 발생하므로, 비관적 락으로 멤버 row를 선점하여 크레딧 정합성을 보장했습니다.
+        val member = memberService.getMemberByUsernameWithLock(username)
 
         // performanceSchedule 조회
         val performanceSchedule = performanceScheduleService.getPerformanceSchedule(reserveRequest.performanceScheduleId)
 
         // 예약하려는 좌석들의 유효성 검사 및 조회
-        val seats = validateAndGetAvailableSeats(reserveRequest.reservedSeat, reserveRequest.performanceScheduleId)
+        val seats = seatService.getAvailableSeats(reserveRequest.reservedSeat, reserveRequest.performanceScheduleId)
 
-        val totalAmount = performanceSchedule.performance.price * reserveRequest.reservedSeat.size // 원가
-        val finalAmount = totalAmount - reserveRequest.rewardDiscountAmount // 총 가격
+        // 예약 비용 지불
+        val (totalAmount, actualRewardDiscount, finalAmount) = calculatePayment(
+            performanceSchedule.performance.price,
+            reserveRequest.reservedSeat.size,
+            reserveRequest.rewardDiscountAmount,
+            member
+        )
 
-        if (finalAmount > member.credit) {
+        if (!isPayable(finalAmount, member.credit)) { // 결제 불가
             throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_ENOUGH_CREDIT)
         }
 
-        member.updateCreditAndReward(finalAmount, reserveRequest.rewardDiscountAmount)
+        member.decreaseCreditAndReward(finalAmount, actualRewardDiscount)
 
         val reserve = Reserve(
             reservationNumber = reserveRequest.reservationNumber,
-            reservedBy = reserveRequest.reservedBy,
             totalAmount = totalAmount,
-            rewardDiscountAmount = reserveRequest.rewardDiscountAmount,
+            rewardDiscountAmount = actualRewardDiscount,
             finalAmount = finalAmount,
-            reservedSeat = reserveRequest.reservedSeat,
-            performanceScheduleId = performanceSchedule.id,
+            performanceScheduleId = performanceSchedule.id!!,
             member = member
         )
 
-        reserveRepository.saveAndFlush(reserve)
+        val savedReserve = reserveRepository.saveAndFlush(reserve)
+        seatService.reserveSeats(seats, savedReserve)
 
-        seats.forEach { seat ->
-            seat.updateStatus(true, reserve)
-        }
-
-        log.info { "예약 성공 - ${member.username}" }
-
-        return ReserveResponse.from(reserve)
+        return ReserveResponse.from(savedReserve, seats.map { it.seatNumber })
     }
 
-    fun validateAndGetAvailableSeats(
-        seats: List<String>,
-        performanceScheduleId: Long
-    ): List<Seat> {
-        return seats.map { seatNumber ->
-            val seat = seatRepository.findByPerformanceScheduleIdAndSeatNumber(performanceScheduleId, seatNumber)
-                ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_SEAT_INFO)
+    // 예약 비용 지불
+    private fun calculatePayment(price: Long, seatCount: Int, requestedDiscount: Long, member: Member): Triple<Long, Long, Long> {
+        val totalAmount = price * seatCount
+        val discountAmount = minOf(requestedDiscount, totalAmount, member.reward)
 
-            if (seat.isReserved) {
-                throw ReserveException(HttpStatus.CONFLICT, ErrorCode.SEAT_ALREADY_RESERVED)
-            }
-            seat
-        }
+        return Triple(totalAmount, discountAmount, totalAmount - discountAmount)
     }
 
+    // 예약 취소
     @Transactional
     fun cancel(reserveNumber: String): Refund {
 
@@ -86,14 +84,9 @@ class ReserveService(
             ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_RESERVE_INFO)
 
         val member = reserve.member
+        member.increaseCreditAndReward(reserve.finalAmount, reserve.rewardDiscountAmount)
 
-        member.credit += reserve.finalAmount
-        member.reward += reserve.rewardDiscountAmount
-
-        reserve.seatList.forEach {
-            it.updateStatus(false, null)
-        }
-
+        seatService.releaseSeats(reserve.seatList)
         reserveRepository.delete(reserve)
 
         return Refund(
@@ -103,8 +96,18 @@ class ReserveService(
         )
     }
 
+    // 사용자의 예약 내역 반환
+    @Transactional(readOnly = true)
     fun getUserReservations(username: String): List<ReserveResponse> {
-        return reserveRepository.findByReservedBy(username)
+        return reserveRepository.findByMemberUsername(username)
             .map(ReserveResponse::from)
+    }
+
+    // 결제 가능 여부 파악
+    private fun isPayable(
+        paymentAmount: Long,
+        currentBalance: Long
+    ): Boolean {
+        return paymentAmount <= currentBalance
     }
 }

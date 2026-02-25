@@ -2,12 +2,9 @@ package com.example.kotlin.jwt
 
 import com.example.kotlin.config.Loggable
 import com.example.kotlin.member.MemberRepository
-import com.example.kotlin.reserveException.ErrorCode
-import com.example.kotlin.reserveException.ReserveException
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
@@ -22,24 +19,27 @@ class JwtFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-
-        val accessToken = request.getHeader("access")
-            ?: run {
-                filterChain.doFilter(request, response)
-                return
-            }
+        val authHeader = request.getHeader("Authorization")
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response)
+            return
+        }
+        val accessToken = authHeader.removePrefix("Bearer ")
 
         try {
             if (jwtUtil.isExpired(accessToken)) {
-                throw ReserveException(HttpStatus.UNAUTHORIZED, ErrorCode.ACCESSTOKEN_ISEXPIRED)
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired")
+                return
             }
-        } catch (e: ReserveException) {
-            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_TOKEN)
+        } catch (e: Exception) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid token")
+            return
         }
 
         val category = jwtUtil.getCategory(accessToken)
         if (category != "access") {
-            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.IS_NOT_ACCESSTOKEN)
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Not an access token")
+            return
         }
 
         val username: String = jwtUtil.getUsername(accessToken)
@@ -47,15 +47,14 @@ class JwtFilter(
         val member = memberRepository.findByUsername(username)
             ?: run {
                 log.warn { "회원 정보를 찾을 수 없습니다. username: $username" }
-                throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_MEMBER_INFO)
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Member not found")
+                return
             }
 
         val customUserDetails = CustomUserDetails(member)
-
         val authToken = UsernamePasswordAuthenticationToken(
             customUserDetails, null, customUserDetails.authorities
         )
-
         SecurityContextHolder.getContext().authentication = authToken
 
         filterChain.doFilter(request, response)
