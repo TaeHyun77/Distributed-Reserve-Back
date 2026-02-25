@@ -15,7 +15,9 @@ class PerformanceRepositoryImpl(
         return queryFactory
             .select(performanceSchedule.performance)
             .from(performanceSchedule)
+            .join(performanceSchedule.performance.performanceScheduleList).fetchJoin()
             .where(performanceSchedule.venue.id.eq(venueId))
+            .distinct()
             .fetch()
     }
 }

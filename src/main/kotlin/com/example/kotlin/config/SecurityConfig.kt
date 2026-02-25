@@ -7,6 +7,7 @@ import com.example.kotlin.jwt.JwtUtil
 import com.example.kotlin.jwt.LoginFilter
 import com.example.kotlin.member.MemberRepository
 import com.example.kotlin.refresh.RefreshRepository
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -51,7 +52,14 @@ class SecurityConfig(
             .httpBasic { it.disable() }
             .authorizeHttpRequests {
                 it
-                    .requestMatchers("/", "/api/**", "/login", "/logout").permitAll()
+                    .requestMatchers("/api/member/**").permitAll()
+                    .requestMatchers("/api/seat/**").permitAll()
+                    .requestMatchers("/api/performanceSchedule/**").permitAll()
+                    .requestMatchers("/api/performance/**").permitAll()
+                    .requestMatchers("/api/reserve").permitAll()
+                    .requestMatchers("/api/reserve/**").permitAll()
+                    .requestMatchers("/api/venue/**").permitAll()
+                    .requestMatchers("/login", "/logout", "/api/reToken").permitAll()
                     .requestMatchers("/admin").hasRole("ADMIN")
                     .anyRequest().authenticated()
             }
@@ -65,6 +73,11 @@ class SecurityConfig(
                 UsernamePasswordAuthenticationFilter::class.java
             )
             .addFilterBefore(CustomLogoutFilter(jwtUtil, refreshRepository), JwtFilter::class.java)
+            .exceptionHandling {
+                it.authenticationEntryPoint { _, response, _ ->
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                }
+            }
             .sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
@@ -80,7 +93,7 @@ class SecurityConfig(
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowCredentials = true
         configuration.allowedHeaders = listOf("*")
-        configuration.exposedHeaders = listOf("Authorization")
+        configuration.exposedHeaders = listOf("Authorization", "access")
         configuration.maxAge = 3600L
 
         val source = UrlBasedCorsConfigurationSource()

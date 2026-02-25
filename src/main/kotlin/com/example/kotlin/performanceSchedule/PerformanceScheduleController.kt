@@ -26,7 +26,7 @@ class PerformanceScheduleController(
     fun getPerformanceScheduleId(
         @PathVariable("venueId") venueId: Long,
         @PathVariable("performanceId") performanceId: Long
-    ): Long? {
+    ): Long {
         return performanceScheduleService.getPerformanceScheduleId(venueId, performanceId)
     }
 

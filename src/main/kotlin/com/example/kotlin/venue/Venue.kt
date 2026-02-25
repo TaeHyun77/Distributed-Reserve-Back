@@ -1,5 +1,6 @@
 package com.example.kotlin.venue
 
+import com.example.kotlin.BaseTime
 import com.example.kotlin.performanceSchedule.PerformanceSchedule
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -23,4 +24,4 @@ class Venue (
 
     @OneToMany(mappedBy = "venue", cascade = [CascadeType.ALL], orphanRemoval = true)
     val performanceScheduleList: List<PerformanceSchedule> = ArrayList()
-)
+): BaseTime()

@@ -14,7 +14,6 @@ data class MemberRequest (
 
     val email: String,
 
-    var reward: Long
 ) {
     fun toEntity(password: String): Member {
         return Member(
@@ -23,7 +22,6 @@ data class MemberRequest (
             name = name,
             role = role,
             email = email,
-            reward = 0
         )
     }
 }

@@ -1,20 +1,24 @@
 package com.example.kotlin.idempotency
 
 import com.example.kotlin.config.Loggable
-import com.example.kotlin.reserve.dto.ReserveResponse
 import com.example.kotlin.reserveException.ReserveException
 import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.transaction.Transactional
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
-@Component
+@Service
 class IdempotencyService(
     private val idempotencyRepository: IdempotencyRepository,
     private val objectMapper: ObjectMapper
 ) : Loggable {
 
+    companion object {
+        private const val EXPIRATION_MINUTES = 10L
+    }
+
+    @Transactional
     fun execute(
         idempotencyKey: String,
         httpMethod: String,
@@ -24,17 +28,23 @@ class IdempotencyService(
         // 기존 이력 확인
         val savedIdempotency = idempotencyRepository.findByIdempotencyKey(idempotencyKey)
 
+        // 기존 이력이 존재하고
         if (savedIdempotency != null) {
+            // 만료되지 않았다면 ( 중복 요청 )
             if (savedIdempotency.expiresAt.isAfter(LocalDateTime.now())) {
                 log.info { "동일한 중복 요청 감지 - 키: $idempotencyKey" }
 
+                // 저장되었던 값 반환
                 return ResponseEntity
                     .status(savedIdempotency.statusCode)
-                    .header("Idempotent-Replayed", "true")
+                    .header("request-Replayed", "true")
                     .body(savedIdempotency.responseBody)
             }
+            // 만료된 키 삭제 후 재실행 ( 만료되었을 시 )
+            idempotencyRepository.delete(savedIdempotency)
         }
 
+        // 기존 이력이 존재하지 않는다면
         return try {
             // 로직 실행
             val response = task()
@@ -69,15 +79,14 @@ class IdempotencyService(
             .body(errorCode)
     }
 
-    @Transactional
-    fun saveIdempotency(key: String, method: String, body: String, status: Int) {
+    private fun saveIdempotency(key: String, method: String, body: String, status: Int) {
         idempotencyRepository.save(
             Idempotency(
                 idempotencyKey = key,
                 httpMethod = method,
                 responseBody = body,
                 statusCode = status,
-                expiresAt = LocalDateTime.now().plusMinutes(10)
+                expiresAt = LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)
             )
         )
     }

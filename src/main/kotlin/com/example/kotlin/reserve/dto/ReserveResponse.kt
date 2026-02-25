@@ -19,11 +19,14 @@ data class ReserveResponse (
     val createdAt: LocalDateTime? = null
 ) {
     companion object {
-        fun from(reserve: Reserve): ReserveResponse {
+        fun from(
+            reserve: Reserve,
+            seatNumbers: List<String> = reserve.seatList.map { it.seatNumber }
+        ): ReserveResponse {
             return ReserveResponse(
                 reservationNumber = reserve.reservationNumber,
                 reservedBy = reserve.member.username,
-                reservedSeat = reserve.reservedSeat,
+                reservedSeat = seatNumbers,
                 totalAmount = reserve.totalAmount,
                 rewardDiscountAmount = reserve.rewardDiscountAmount,
                 finalAmount = reserve.finalAmount,

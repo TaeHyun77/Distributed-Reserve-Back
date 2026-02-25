@@ -13,7 +13,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Entity
@@ -32,9 +31,7 @@ class PerformanceSchedule(
     val performance: Performance,
 
     @OneToMany(mappedBy = "performanceSchedule", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val seatList: List<Seat> = ArrayList(),
-
-    val screeningDate: LocalDate,
+    val seatList: List<Seat> = emptyList(),
 
     val startTime: LocalDateTime,
 

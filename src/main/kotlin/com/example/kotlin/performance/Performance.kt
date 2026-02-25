@@ -1,5 +1,6 @@
 package com.example.kotlin.performance
 
+import com.example.kotlin.BaseTime
 import com.example.kotlin.performanceSchedule.PerformanceSchedule
 import jakarta.persistence.*
 
@@ -21,4 +22,4 @@ class Performance(
 
     @OneToMany(mappedBy = "performance", cascade = [CascadeType.ALL], orphanRemoval = true)
     val performanceScheduleList: List<PerformanceSchedule> = ArrayList()
-)
+): BaseTime()
