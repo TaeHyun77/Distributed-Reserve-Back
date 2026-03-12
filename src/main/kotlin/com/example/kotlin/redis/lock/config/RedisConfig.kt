@@ -17,7 +17,6 @@ class RedisConfig(
     @Bean
     fun redissonClient(): RedissonClient {
         val config = Config()
-
         config.useSingleServer().address = "$REDISSON_HOST_PREFIX$host:$port"
 
         return Redisson.create(config)

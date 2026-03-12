@@ -9,37 +9,22 @@ class PerformanceScheduleRepositoryImpl(
 ): PerformanceScheduleRepositoryCustom {
 
     override
-    fun findPerformanceScheduleByVenueIdAndPerformanceId(
+    fun findPerformanceScheduleList(
         venueId: Long,
-        performanceId: Long
-    ): PerformanceSchedule? {
-        val performanceSchedule = QPerformanceSchedule.performanceSchedule
-
-        return queryFactory
-            .select(performanceSchedule)
-            .from(performanceSchedule)
-            .where(
-                performanceSchedule.venue.id.eq(venueId),
-                performanceSchedule.performance.id.eq(performanceId)
-            )
-            .fetchOne()
-    }
-
-    override
-    fun findPerformanceScheduleListByVenueIdAndPerformanceId(
-        venueId: Long,
-        performanceId: Long
+        performanceId: Long?
     ): List<PerformanceSchedule> {
-        val performanceSchedule = QPerformanceSchedule.performanceSchedule
+        val ps = QPerformanceSchedule.performanceSchedule
 
-        return queryFactory
-            .select(performanceSchedule)
-            .from(performanceSchedule)
-            .join(performanceSchedule.performance).fetchJoin()
-            .where(
-                performanceSchedule.venue.id.eq(venueId),
-                performanceSchedule.performance.id.eq(performanceId)
-            )
-            .fetch()
+        val query = queryFactory
+            .select(ps)
+            .from(ps)
+            .join(ps.performance).fetchJoin()
+            .where(ps.venue.id.eq(venueId))
+
+        if (performanceId != null) {
+            query.where(ps.performance.id.eq(performanceId))
+        }
+
+        return query.fetch()
     }
 }

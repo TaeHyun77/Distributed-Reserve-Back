@@ -13,7 +13,7 @@ class LockManager(
 
     companion object {
         private const val WAIT_TIME = 3L
-        private const val LEASE_TIME = 5L
+        private const val LEASE_TIME = 10L // leaseTime : 락을 획득한 후 자동으로 해제되기까지 유지되는 최대 시간
     }
 
     // 단일 키에 대한 락
@@ -36,13 +36,15 @@ class LockManager(
     // 여러 키에 대한 멀티락
     fun tryMultiLock(
         keys: List<String>,
-        waitTime: Long = 3,
-        leaseTime: Long = 5,
+        waitTime: Long = WAIT_TIME,
+        leaseTime: Long = LEASE_TIME,
         timeUnit: TimeUnit = TimeUnit.SECONDS
     ): RLock? {
+        // RMultiLock이 all-or-nothing으로 동작하므로, 정렬하면 동일한 좌석 조합에 대해 락 획득 순서가 일관되어서 충돌 확률이 줄어듭니다.
+        val sortedKeys = keys.sorted()
 
         // 특정 key들에 대한 lock 객체
-        val locks = keys.map { redissonClient.getLock(it) }
+        val locks = sortedKeys.map { redissonClient.getLock(it) }
 
         val multiLock = redissonClient.getMultiLock(*locks.toTypedArray())
 
@@ -54,15 +56,17 @@ class LockManager(
         }
     }
 
+    // 락 해제
     fun unlock(lock: RLock?) {
         if (lock == null) return
         try {
-            lock.unlock()
-        } catch (e: IllegalMonitorStateException) {
-            log.warn { "현재 스레드가 Lock을 보유하고 있지 않음 - leaseTime 만료 가능성" }
+            if (lock.isHeldByCurrentThread) {
+                lock.unlock()
+            } else {
+                log.warn { "Lock이 현재 스레드 소유가 아님 - leaseTime 만료로 이미 해제된 것으로 추정" }
+            }
         } catch (e: Exception) {
             log.error(e) { "Lock 해제 실패" }
         }
     }
-
 }

@@ -22,7 +22,6 @@ class SeatRepositoryImpl(
             .fetch()
     }
 
-
     override
     fun findByPerformanceScheduleIdAndSeatNumber(performanceScheduleId: Long, seatNumber: String): Seat? {
         val seat = QSeat.seat

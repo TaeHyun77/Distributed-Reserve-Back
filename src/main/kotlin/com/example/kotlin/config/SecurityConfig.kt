@@ -59,7 +59,7 @@ class SecurityConfig(
                     .requestMatchers("/api/reserve").permitAll()
                     .requestMatchers("/api/reserve/**").permitAll()
                     .requestMatchers("/api/venue/**").permitAll()
-                    .requestMatchers("/login", "/logout", "/api/reToken").permitAll()
+                    .requestMatchers("/login", "/logout", "/api/reToken", "/api/init").permitAll()
                     .requestMatchers("/admin").hasRole("ADMIN")
                     .anyRequest().authenticated()
             }

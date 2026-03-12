@@ -18,7 +18,6 @@ class IdempotencyService(
         private const val EXPIRATION_MINUTES = 10L
     }
 
-    @Transactional
     fun execute(
         idempotencyKey: String,
         httpMethod: String,
@@ -78,6 +77,7 @@ class IdempotencyService(
             .status(status)
             .body(errorCode)
     }
+
 
     private fun saveIdempotency(key: String, method: String, body: String, status: Int) {
         idempotencyRepository.save(

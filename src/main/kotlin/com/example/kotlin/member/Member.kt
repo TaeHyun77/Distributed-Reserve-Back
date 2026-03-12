@@ -22,7 +22,7 @@ class Member(
 
     val email: String,
 
-    var credit: Long = 30000,
+    var credit: Long = 300000,
 
     var reward: Long = 0L,
 

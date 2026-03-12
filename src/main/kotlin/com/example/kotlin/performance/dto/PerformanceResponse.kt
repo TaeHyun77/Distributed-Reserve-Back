@@ -11,7 +11,7 @@ data class PerformanceResponse(
 
     val title: String,
 
-    val duration: String,
+    val duration: Int,
 
     val price: Long,
 

@@ -1,6 +1,9 @@
 package com.example.kotlin.member
 
+import com.example.kotlin.reserveException.ErrorCode
+import com.example.kotlin.reserveException.ReserveException
 import com.example.kotlin.util.removeSpacesAndHyphens
+import org.springframework.http.HttpStatus
 
 @JvmInline
 value class CheckUsername private constructor (val username: String) {
@@ -26,10 +29,8 @@ value class CheckUsername private constructor (val username: String) {
     }
 
     private fun validateUsername(username: String) {
-
-        // 정규식 ( 형식 )에 적합하지 않는다면 IllegalArgumentException 발생
-        require(USERNAME_REGEX.matchEntire(username) != null) {
-            "Invalid username"
+        if (USERNAME_REGEX.matchEntire(username) == null) {
+            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_USERNAME)
         }
     }
 }

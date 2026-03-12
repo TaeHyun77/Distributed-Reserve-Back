@@ -8,7 +8,6 @@ import com.example.kotlin.member.dto.MemberRewardResponse
 import com.example.kotlin.redis.lock.RedisLockUtil
 import com.example.kotlin.reserveException.ErrorCode
 import com.example.kotlin.reserveException.ReserveException
-import com.example.kotlin.util.removeSpacesAndHyphens
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -25,12 +24,12 @@ class MemberService(
     private val redisLockUtil: RedisLockUtil
 
 ): Loggable {
-
     companion object {
         private const val DAILY_REWARD_AMOUNT = 200L
         private val KST = ZoneId.of("Asia/Seoul")
     }
 
+    // 사용자 정보 반환
     fun memberInfo(username: String): MemberResponse {
         val member = getMemberByUsername(username)
         log.info { "username: $username" }
@@ -38,6 +37,7 @@ class MemberService(
         return MemberResponse.from(member)
     }
 
+    // 사용자 생성
     @Transactional
     fun saveMember(memberRequest: MemberRequest) {
         if (memberRepository.existsByUsername(memberRequest.username)) {
@@ -50,18 +50,14 @@ class MemberService(
     }
 
     // 사용자 아이디 유효성 검사
-    fun checkUsername(username: String): ResponseEntity<String> {
-        val checkedUsername = try {
-            CheckUsername.of(username)
-        } catch (e: IllegalArgumentException) {
-            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_USERNAME)
-        }
+    fun checkUsername(username: String): String {
+        val cleaned = CheckUsername.of(username).username
 
-        if (memberRepository.existsByUsername(checkedUsername.username)) {
+        if (memberRepository.existsByUsername(cleaned)) {
             throw ReserveException(HttpStatus.CONFLICT, ErrorCode.DUPLICATED_USERNAME)
         }
 
-        return ResponseEntity.ok(checkedUsername.username)
+        return cleaned
     }
 
     // 리워드 지급 로직
@@ -80,6 +76,8 @@ class MemberService(
         }
     }
 
+    // 리워드 지급 실행 로직
+    @Transactional
     fun processRewardEarning(
         username: String,
         today: LocalDate
@@ -90,7 +88,7 @@ class MemberService(
         // 오늘 이미 리워드를 받은 경우
         if (member.hasClaimedRewardToday(today)) {
             log.info { "리워드 지급 실패 - 날짜 : ${today}, 사용자: ${member.username}" }
-            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.REWARD_ALREADY_CLAIMED)
+            throw ReserveException(HttpStatus.CONFLICT, ErrorCode.REWARD_ALREADY_CLAIMED)
         }
 
         // 오늘 리워드를 받지 않은 경우 지급

@@ -18,29 +18,6 @@ class SeatService(
     private val performanceScheduleRepository: PerformanceScheduleRepository
 ): Loggable {
 
-    // 특정 공연의 좌석 초기화
-    @Transactional
-    fun initSeats(performanceScheduleId: Long) {
-
-        val performanceSchedule: PerformanceSchedule = performanceScheduleRepository.findById(performanceScheduleId)
-            .orElseThrow { ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_SCHEDULE) }
-
-        val seats = mutableListOf<Seat>()
-
-        for (row in 'A'..'E') {
-            for (col in 1..5) {
-                val seatNumber = "$row$col"
-
-                val seat = Seat(
-                    seatNumber = seatNumber,
-                    performanceSchedule = performanceSchedule
-                )
-                seats.add(seat)
-            }
-        }
-        seatRepository.saveAll(seats)
-    }
-
     // 좌석 예약
     @Transactional
     fun reserveSeats(seats: List<Seat>, reserve: Reserve) {
