@@ -7,25 +7,21 @@
 
 - 예약, 예약 취소 및 리워드 지급 로직에 '멱등성'을 적용하여 API 중복 호출로 인해 발생할 수 있는 오류를 방지했습니다.
 
-- 동시성 문제가 발생할 수 있는 예약, 예약 취소, 리워드 지급 등의 핵심 로직에 Redis 분산 락 ( mutex → Redisson 기반 )을 적용하여 충돌을 방지했습니다.<br><br>
+- 동시성 문제가 발생할 수 있는 예약, 예약 취소, 리워드 지급 등의 핵심 로직에 Redisson 기반 분산 락을 적용하여 동시 요청 간 충돌을 방지했습니다.<br><br>
 
 <p>Front 리포지토리<br>
+  
 https://github.com/TaeHyun77/reserve-project-front.git
 </p><br>
 
 <p>개발 과정 블로그<br>
+  
 https://velog.io/@ayeah77/series/%EC%98%88%EC%95%BD-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8
 </p><br>
 
-### 시연 영상
----
-![Image](https://github.com/user-attachments/assets/04e6af77-44d2-4098-a96e-c605e5922f66)
-
-<br>
-
 ### 기술 스택
 ---
-Backend : SpringBoot , Spring Data JPA, Kotlin
+Backend : SpringBoot, Spring Data JPA, Kotlin
 
 Frontend : React, JavaScript
 
