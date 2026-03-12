@@ -25,6 +25,7 @@ class ReserveController(
     private val reserveService: ReserveService
 ): Loggable {
 
+    // 예약
     @PostMapping
     fun reserveSeat(
         @RequestBody reserveRequest: ReserveRequest,
@@ -33,8 +34,6 @@ class ReserveController(
     ): ResponseEntity<String> {
         val idempotencyKey: String = httpRequest.getHeader("idempotency-key")
             ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_IN_HEADER_IDEMPOTENCY_KEY)
-
-        log.info { "reward : ${reserveRequest.rewardDiscountAmount}" }
 
         return reserveFacadeService.reserveSeat(reserveRequest, userDetails.username, idempotencyKey)
     }

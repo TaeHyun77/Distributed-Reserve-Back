@@ -21,6 +21,7 @@ class PerformanceScheduleService(
     private val performanceRepository: PerformanceRepository
 ): Loggable {
 
+    // 공연 정보 생성
     @Transactional
     fun createPerformanceSchedule(performanceScheduleRequest: PerformanceScheduleRequest) {
 
@@ -33,29 +34,21 @@ class PerformanceScheduleService(
         performanceScheduleRepository.save(performanceScheduleRequest.toEntity(venue, performance))
     }
 
+    // 공연 일정 목록 반환
     fun getPerformanceScheduleList(
         venueId: Long,
-        performanceId: Long
+        performanceId: Long? = null
     ): List<PerformanceScheduleResponse> {
-        return performanceScheduleRepository.findPerformanceScheduleListByVenueIdAndPerformanceId(venueId, performanceId)
+        return performanceScheduleRepository.findPerformanceScheduleList(venueId, performanceId)
             .ifEmpty { throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_SCHEDULE) }
             .map(PerformanceScheduleResponse::from)
     }
 
+    // 공연 정보 반환
     fun getPerformanceSchedule(performanceScheduleId: Long): PerformanceSchedule {
         return performanceScheduleRepository.findById(performanceScheduleId)
             .orElseThrow {
                 ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_INFO)
             }
-    }
-
-    fun getPerformanceScheduleId(
-        venueId: Long,
-        performanceId: Long
-    ): Long {
-        val performanceSchedule = performanceScheduleRepository.findPerformanceScheduleByVenueIdAndPerformanceId(venueId, performanceId)
-            ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_SCHEDULE)
-
-        return performanceSchedule.id!!
     }
 }

@@ -22,20 +22,18 @@ class PerformanceScheduleController(
         performanceScheduleService.createPerformanceSchedule(performanceScheduleRequest)
     }
 
-    @GetMapping("/get/{venueId}/{performanceId}")
-    fun getPerformanceScheduleId(
-        @PathVariable("venueId") venueId: Long,
-        @PathVariable("performanceId") performanceId: Long
-    ): Long {
-        return performanceScheduleService.getPerformanceScheduleId(venueId, performanceId)
-    }
-
-
     @GetMapping("/get/list/{venueId}/{performanceId}")
     fun getPerformanceScheduleList(
         @PathVariable("venueId") venueId: Long,
         @PathVariable("performanceId") performanceId: Long
     ): List<PerformanceScheduleResponse> {
         return performanceScheduleService.getPerformanceScheduleList(venueId, performanceId)
+    }
+
+    @GetMapping("/get/list/{venueId}")
+    fun getPerformanceScheduleListByVenue(
+        @PathVariable("venueId") venueId: Long
+    ): List<PerformanceScheduleResponse> {
+        return performanceScheduleService.getPerformanceScheduleList(venueId)
     }
 }

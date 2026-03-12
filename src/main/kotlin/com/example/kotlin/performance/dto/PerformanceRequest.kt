@@ -7,7 +7,7 @@ data class PerformanceRequest(
 
     val title: String,
 
-    val duration: String,
+    val duration: Int,
 
     val price: Long
 ) {

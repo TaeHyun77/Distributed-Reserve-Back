@@ -11,11 +11,13 @@ class VenueService(
     private val venueRepository: VenueRepository
 ) {
 
+    // venue 생성
     @Transactional
     fun createVenue(venueRequest: VenueRequest) {
         venueRepository.save(venueRequest.toEntity())
     }
 
+    // venue 목록 반환
     fun getVenueList(): List<VenueResponse> {
         return venueRepository.findAll()
             .map(VenueResponse::from)

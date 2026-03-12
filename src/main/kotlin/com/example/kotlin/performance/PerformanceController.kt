@@ -15,11 +15,13 @@ class PerformanceController(
     private val performanceService: PerformanceService
 ) {
 
+    // 공연 생성
     @PostMapping("/create")
     fun createPerformance(@RequestBody performanceRequest: PerformanceRequest) {
         return performanceService.createPerformance(performanceRequest)
     }
 
+    // 공연 목록 반환
     @GetMapping("/get/list/{venueId}")
     fun getPerformanceList(
         @PathVariable("venueId") venueId: Long
