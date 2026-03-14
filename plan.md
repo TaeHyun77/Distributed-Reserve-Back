@@ -1,7 +1,6 @@
 # 프로젝트 분석 및 개선 계획
 
-> 분석 대상: Distributed-Reserve-Back (Spring Boot 3.5.0 + Kotlin + MySQL + Redis)
-> 분석 일자: 2026-03-14
+Distributed-Reserve-Back (Spring Boot 3.5.0 + Kotlin + MySQL + Redis)
 
 ---
 
@@ -23,102 +22,6 @@ isHttpOnly = false
 isHttpOnly = true
 secure = true       // HTTPS 전용
 // sameSite = "Strict"  // CSRF 방지 (필요 시)
-```
-
----
-
-### 1.2 JWT에 password 저장 메서드 존재
-
-**파일**: `src/main/kotlin/com/example/reserve/jwt/JwtUtil.kt:33-34`
-
-**현재 코드**:
-```kotlin
-fun getPassword(token: String): String {
-    return getClaim(token, "password")
-}
-```
-
-**문제**: JWT 토큰은 Base64로만 인코딩되어 누구나 디코딩 가능하다. 토큰에 비밀번호(해시)를 저장하면 탈취 시 자격증명이 직접 노출된다.
-
-**개선안**: password claim을 토큰 생성/파싱에서 완전히 제거한다. 인증에 필요한 최소 정보(username, role)만 저장한다.
-
----
-
-### 1.3 평문 비밀번호 로깅
-
-**파일**: `src/main/kotlin/com/example/reserve/jwt/LoginFilter.kt:30`
-
-**현재 코드**:
-```kotlin
-log.info { "password : $password" }
-```
-
----
-
-## 2. 높음 (동시성·기능 문제)
-
-### 2.1 멱등성 Race Condition
-
-**파일**: `src/main/kotlin/com/example/reserve/idempotency/IdempotencyService.kt:28-44`
-
-**현재 흐름**:
-```
-findByIdempotencyKey → (null이면) → execute → saveIdempotency
-```
-
-**문제**: 두 스레드가 동시에 같은 `idempotencyKey`로 진입하면 둘 다 `null`을 받고 동시에 실행 후 `saveIdempotency`에서 유니크 제약 위반이 발생한다. 만료된 키 삭제 시에도 동일한 문제가 발생한다.
-
-**개선안**:
-- 방법 A: 멱등성 키에 대한 Redis 분산 락 추가 (이미 Redis 인프라 존재)
-- 방법 B: DB `INSERT ... ON DUPLICATE KEY UPDATE` + 상태 필드(PROCESSING/COMPLETED)로 원자적 처리
-
----
-
-### 2.2 락 타임아웃 설정 (LEASE_TIME=10초)
-
-**파일**: `src/main/kotlin/com/example/reserve/redis/lock/LockManager.kt:15-16`
-
-**현재 코드**:
-```kotlin
-private const val WAIT_TIME = 3L   // 락 대기 3초
-private const val LEASE_TIME = 10L // 락 보유 10초
-```
-
-**문제**: `ReserveService.reserve()` 내에서 member 조회(비관적 락), seat 조회, payment 계산, DB insert, seat update를 모두 수행한다. DB 부하가 높은 상황에서 10초 안에 완료되지 않으면 락이 자동 해제되어 다른 스레드가 동일 좌석에 진입 → 중복 예약 가능성이 있다.
-
-**개선안**:
-- `LEASE_TIME`을 30초 이상으로 조정
-- `WAIT_TIME`을 5~10초로 조정
-- 또는 Redisson watchdog[util](src%2Fmain%2Fkotlin%2Fcom%2Fexample%2Freserve%2Futil) 메커니즘 활용 (`LEASE_TIME = -1`로 설정 시 자동 연장)
-
----
-
-### 2.3 좌석 조회 시 DB 락 부재
-
-**파일**: `src/main/kotlin/com/example/reserve/seat/SeatService.kt:34-47`
-
-**현재 상태**: Redis 분산 락으로 좌석 단위 동시성은 보호하지만, DB 레벨에서는 일반 SELECT로 조회한다.
-
-**문제**: Redis 락이 2.2의 타임아웃 문제로 해제된 경우, DB 레벨 보호가 없어 두 트랜잭션이 동시에 같은 좌석을 "미예약" 상태로 읽을 수 있다.
-
-**개선안**: `SeatRepository`에 `@Lock(PESSIMISTIC_READ)` 또는 QueryDSL `forUpdate()`를 적용하여 방어적 이중 검증을 추가한다.
-
----
-
-### 2.4 PerformanceRepositoryImpl Fetch Join 불일치
-
-**파일**: `src/main/kotlin/com/example/reserve/performance/repository/PerformanceRepositoryImpl.kt:18`
-
-**현재 코드**:
-```kotlin
-.join(performanceSchedule.performance.performanceScheduleList).fetchJoin()
-```
-
-**문제**: `select(performanceSchedule.performance)` 대상과 fetch join 대상이 맞지 않는다. Performance의 모든 scheduleList를 불필요하게 로드한다.
-
-**개선안**:
-```kotlin
-.join(performanceSchedule.performance).fetchJoin()
 ```
 
 ---

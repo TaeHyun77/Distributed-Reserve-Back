@@ -16,12 +16,4 @@ class PerformanceService(
     fun createPerformance(performanceRequest: PerformanceRequest) {
         performanceRepository.save(performanceRequest.toEntity())
     }
-
-    // 공연 목록 반환
-    @Transactional
-    fun getPerformanceList(venueId: Long): List<PerformanceResponse> {
-        val performanceList = performanceRepository.findPerformancesByVenueId(venueId)
-
-        return performanceList.map(PerformanceResponse::from)
-    }
 }

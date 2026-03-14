@@ -30,10 +30,6 @@ class JwtUtil(
         return getClaim(token, "username")
     }
 
-    fun getPassword(token: String): String {
-        return getClaim(token, "password")
-    }
-
     fun getRole(token: String): Role {
         val roleName = getClaim(token, "role")
 

@@ -4,7 +4,6 @@ import com.example.reserve.config.Loggable
 import com.example.reserve.member.Member
 import com.example.reserve.member.MemberService
 import com.example.reserve.performanceSchedule.PerformanceScheduleService
-import com.example.reserve.reserve.dto.Refund
 import com.example.reserve.reserve.dto.ReserveRequest
 import com.example.reserve.reserve.dto.ReserveResponse
 import com.example.reserve.reserve.repository.ReserveRepository
@@ -78,22 +77,20 @@ class ReserveService(
 
     // 예약 취소
     @Transactional
-    fun cancel(reserveNumber: String): Refund {
-
+    fun cancelReserve(reserveNumber: String, username: String) {
         val reserve = reserveRepository.findByReservationNumber(reserveNumber)
             ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_RESERVE_INFO)
 
-        val member = reserve.member
+        if (reserve.member.username != username) {
+            throw ReserveException(HttpStatus.FORBIDDEN, ErrorCode.UNAUTHORIZED_ACCESS)
+        }
+
+        // credit 정합성을 위해 member 비관적 락
+        val member = memberService.getMemberByUsernameWithLock(username)
         member.increaseCreditAndReward(reserve.finalAmount, reserve.rewardDiscountAmount)
 
         seatService.releaseSeats(reserve.seatList)
         reserveRepository.delete(reserve)
-
-        return Refund(
-            member.username,
-            reserve.finalAmount,
-            reserve.rewardDiscountAmount
-        )
     }
 
     // 사용자의 예약 내역 반환

@@ -106,7 +106,6 @@ class MemberService(
     }
 
     // 사용자 이름으로 lock
-    @Transactional
     fun getMemberByUsernameWithLock(username: String): Member {
         return memberRepository.findByUsernameWithLock(username)
             ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_MEMBER_INFO)
