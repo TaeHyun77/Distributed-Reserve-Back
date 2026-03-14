@@ -41,9 +41,11 @@ class ReserveController(
     // 예약 취소
     @DeleteMapping("/delete/{reserveNumber}")
     fun cancelReservation(
-        @PathVariable("reserveNumber") reserveNumber: String
-    ) {
-        reserveFacadeService.cancelReserve(reserveNumber)
+        @PathVariable("reserveNumber") reserveNumber: String,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): ResponseEntity<Unit> {
+        reserveService.cancelReserve(reserveNumber, userDetails.username)
+        return ResponseEntity.noContent().build()
     }
 
     // 예약 내역

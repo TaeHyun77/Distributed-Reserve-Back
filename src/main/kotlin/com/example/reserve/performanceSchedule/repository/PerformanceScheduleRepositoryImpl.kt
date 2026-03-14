@@ -8,6 +8,7 @@ class PerformanceScheduleRepositoryImpl(
     private val queryFactory: JPAQueryFactory
 ): PerformanceScheduleRepositoryCustom {
 
+    // 공연 정보 목록 반환
     override
     fun findPerformanceScheduleList(
         venueId: Long,

@@ -2,7 +2,6 @@ package com.example.reserve.reserve
 
 import com.example.reserve.idempotency.IdempotencyService
 import com.example.reserve.redis.lock.RedisLockUtil
-import com.example.reserve.reserve.dto.Refund
 import com.example.reserve.reserve.dto.ReserveRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
@@ -30,12 +29,6 @@ class ReserveFacadeService(
             idempotencyService.execute(idempotencyKey, "POST") {
                 reserveService.reserve(reserveRequest, username)
             }
-        }
-    }
-
-    fun cancelReserve(reserveNumber: String): Refund {
-        return redisLockUtil.acquireLockAndRun("reserve:$reserveNumber:cancel") {
-            reserveService.cancel(reserveNumber)
         }
     }
 }
