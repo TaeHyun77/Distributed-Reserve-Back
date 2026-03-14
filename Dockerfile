@@ -5,7 +5,7 @@ FROM amazoncorretto:17-alpine
 WORKDIR /app
 
 # 빌드 결과물 복사
-COPY build/libs/kotlin-0.0.1-SNAPSHOT.jar intergrated-reserve.jar
+COPY build/libs/reserve-0.0.1-SNAPSHOT.jar intergrated-reserve.jar
 
 # 애플리케이션 실행
 CMD ["java", "-jar", "intergrated-reserve.jar"]
