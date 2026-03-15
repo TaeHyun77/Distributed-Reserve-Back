@@ -44,4 +44,9 @@ class Member(
     }
 
     fun hasClaimedRewardToday(today: LocalDate) = lastRewardDate == today
+
+    fun claimDailyReward(today: LocalDate, amount: Int) {
+        this.lastRewardDate = today
+        this.reward += amount
+    }
 }

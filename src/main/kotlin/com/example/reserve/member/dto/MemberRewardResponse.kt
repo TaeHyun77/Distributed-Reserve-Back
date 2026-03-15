@@ -7,5 +7,7 @@ data class MemberRewardResponse (
 
     val reward: Long,
 
-    val lastRewardDate: LocalDate?
+    val lastRewardDate: LocalDate?,
+
+    val granted: Boolean // 이번 요청에서 실제로 지급되었는지
 )

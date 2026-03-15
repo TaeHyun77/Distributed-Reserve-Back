@@ -43,12 +43,9 @@ class ReserveController(
     fun cancelReservation(
         @PathVariable("reserveNumber") reserveNumber: String,
         @AuthenticationPrincipal userDetails: CustomUserDetails
-    ): ResponseEntity<Unit> {
-        reserveService.cancelReserve(reserveNumber, userDetails.username)
-        return ResponseEntity.noContent().build()
-    }
+    ) = reserveService.cancelReserve(reserveNumber, userDetails.username)
 
-    // 예약 내역
+    // 예약 목록 반환
     @GetMapping("/get/list/{username}")
     fun getUserReservations(
         @PathVariable("username") username: String
