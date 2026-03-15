@@ -36,7 +36,6 @@ class IdempotencyService(
                 // 저장되었던 값 반환
                 return ResponseEntity
                     .status(savedIdempotency.statusCode)
-                    .header("request-Replayed", "true")
                     .body(savedIdempotency.responseBody)
             }
             // 만료된 키 삭제 후 재실행 ( 만료되었을 시 )
@@ -50,12 +49,17 @@ class IdempotencyService(
             val successJson = objectMapper.writeValueAsString(response)
 
             // 성공 결과 저장
-            saveIdempotency(idempotencyKey, httpMethod, successJson, 200)
+            recordResponse(idempotencyKey, httpMethod, successJson, 200)
             log.info { "멱등성 키 저장 (성공) - 키: $idempotencyKey" }
 
             ResponseEntity.ok(successJson)
 
         } catch (e: Exception) {
+            // 일시적 에러는 캐싱하지 않고 그대로 던짐
+            if (isTransientError(e)) {
+                throw e
+            }
+
             handleException(idempotencyKey, httpMethod, e)
         }
     }
@@ -70,7 +74,7 @@ class IdempotencyService(
             else -> 500 to "INTERNAL_SERVER_ERROR"
         }
 
-        saveIdempotency(idempotencyKey, httpMethod, errorCode, status)
+        recordResponse(idempotencyKey, httpMethod, errorCode, status)
         log.error(e) { "멱등성 키 저장 (실패) - 키: $idempotencyKey, 에러: $errorCode" }
 
         return ResponseEntity
@@ -79,7 +83,7 @@ class IdempotencyService(
     }
 
 
-    private fun saveIdempotency(key: String, method: String, body: String, status: Int) {
+    private fun recordResponse(key: String, method: String, body: String, status: Int) {
         idempotencyRepository.save(
             Idempotency(
                 idempotencyKey = key,
@@ -89,5 +93,9 @@ class IdempotencyService(
                 expiresAt = LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)
             )
         )
+    }
+
+    private fun isTransientError(e: Exception): Boolean {
+        return e !is ReserveException  // ReserveException은 비즈니스 에러 → 캐싱
     }
 }

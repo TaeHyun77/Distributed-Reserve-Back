@@ -24,7 +24,6 @@ class PerformanceScheduleService(
     // 공연 정보 생성
     @Transactional
     fun createPerformanceSchedule(performanceScheduleRequest: PerformanceScheduleRequest) {
-
         val venue: Venue = venueRepository.findById(performanceScheduleRequest.venueId)
             .orElseThrow { ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PLACE_INFO) }
 

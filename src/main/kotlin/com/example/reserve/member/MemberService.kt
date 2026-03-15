@@ -20,13 +20,10 @@ import java.time.ZoneId
 class MemberService(
     private val memberRepository: MemberRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val idempotencyService: IdempotencyService,
-    private val redisLockUtil: RedisLockUtil
-
 ): Loggable {
+
     companion object {
-        private const val DAILY_REWARD_AMOUNT = 200L
-        private val KST = ZoneId.of("Asia/Seoul")
+        private const val DAILY_REWARD_AMOUNT = 200
     }
 
     // 사용자 정보 반환
@@ -60,43 +57,20 @@ class MemberService(
         return cleaned
     }
 
-    // 리워드 지급 로직
-    fun earnRewardToday(
-        username: String,
-        idempotencyKey: String
-    ): ResponseEntity<String> {
-
-        val today = LocalDate.now(KST)
-
-        // username은 중복되지 않기 때문에 락 키로 사용 가능
-        return redisLockUtil.acquireLockAndRun("${today}:${username}:todayReward") {
-            idempotencyService.execute(idempotencyKey, "POST") {
-                processRewardEarning(username, today)
-            }
-        }
-    }
-
     // 리워드 지급 실행 로직
     @Transactional
-    fun processRewardEarning(
-        username: String,
-        today: LocalDate
-    ): MemberRewardResponse {
+    fun getTodayReward(username: String): MemberRewardResponse {
+        val member = getMemberByUsernameWithLock(username)
+        val today = LocalDate.now(ZoneId.of("Asia/Seoul"))
 
-        val member = getMemberByUsername(username)
-
-        // 오늘 이미 리워드를 받은 경우
-        if (member.hasClaimedRewardToday(today)) {
-            log.info { "리워드 지급 실패 - 날짜 : ${today}, 사용자: ${member.username}" }
-            throw ReserveException(HttpStatus.CONFLICT, ErrorCode.REWARD_ALREADY_CLAIMED)
+        val granted = if (!member.hasClaimedRewardToday(today)) {
+            member.claimDailyReward(today, DAILY_REWARD_AMOUNT)
+            true
+        } else {
+            false
         }
 
-        // 오늘 리워드를 받지 않은 경우 지급
-        member.lastRewardDate = today
-        member.reward += DAILY_REWARD_AMOUNT
-        log.info { "리워드 지급 성공 - $today ${member.username}님에게 리워드가 지급되었습니다." }
-
-        return MemberRewardResponse(member.username, member.reward, member.lastRewardDate)
+        return MemberRewardResponse(member.username, member.reward, member.lastRewardDate, granted)
     }
 
     // 사용자 이름으로 사용자 정보 반환

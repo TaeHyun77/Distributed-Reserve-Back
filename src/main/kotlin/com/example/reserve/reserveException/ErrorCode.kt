@@ -27,20 +27,16 @@ enum class ErrorCode (
     NOT_EXIST_REFRESH_TOKEN("NOT_EXIST_REFRESH_TOKEN", "refresh token이 존재하지 않습니다."),
 
     // TOKEN
-    ACCESSTOKEN_ISEXPIRED("ACCESSTOKEN_ISEXPIRED", "JWT 토큰 만료"),
-
     INVALID_TOKEN("INVALID_TOKEN", "유효하지 않은 토큰"),
-
-    IS_NOT_ACCESSTOKEN("IS_NOT_ACCESSTOKEN", "JWT 토큰이 아닙니다."),
 
     EXPIRED_TOKEN("EXPIRED_TOKEN", "만료된 토큰입니다."),
 
     // RESERVE
     SEAT_ALREADY_RESERVED("SEAT_ALREADY_RESERVED", "이미 예약된 좌석입니다."),
 
-    FAIL_TO_RETURN_RESERVED_SEAT_LIST("FAIL_TO_RETURN_RESERVED_SEAT_LIST", "예약 좌석 리스트 반환 실패"),
-
     NOT_ENOUGH_CREDIT("NOT_ENOUGH_CREDIT", "보유 금액이 부족합니다."),
+
+    ALREADY_CANCELLED("ALREADY_CANCELLED", "이미 취소된 예약 내역입니다."),
 
 
     // JOIN
@@ -54,10 +50,6 @@ enum class ErrorCode (
 
 
     // ECT
-    FAIL_TO_SAVE_DATA("FAIL_TO_SAVE_DATA", "데이터 저장 실패"),
-
-    CANNOT_DELETE_SOME_SCREENING_HAVE_NOT_YET_ENDED("CANNOT_DELETE_SOME_SCREENING_HAVE_NOT_YET_ENDED", "아직 종료되지 않은 상영 정보가 있어 삭제할 수 없습니다."),
-
     FAILED_TO_ACQUIRED_LOCK("REDIS_FAILED_TO_ACQUIRED_LOCK", "레디스에서 Lock을 획득 실패"),
 
     NOT_EXIST_LOCK_KEY("REDIS_NOT_EXIST_LOCK_KEY", "레디스 lock 키가 존재하지 않습니다."),

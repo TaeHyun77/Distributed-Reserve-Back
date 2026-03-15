@@ -2,16 +2,12 @@ package com.example.reserve.reserve
 
 import com.example.reserve.BaseTime
 import com.example.reserve.member.Member
+import com.example.reserve.reserveException.ErrorCode
+import com.example.reserve.reserveException.ReserveException
 import com.example.reserve.seat.Seat
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
+import jakarta.persistence.*
+import org.springframework.http.HttpStatus
+import java.time.LocalDateTime
 
 @Entity
 class Reserve(
@@ -35,10 +31,24 @@ class Reserve(
     // 예약한 공연 ID
     val performanceScheduleId: Long,
 
+    @Enumerated(EnumType.STRING)
+    var status: ReserveStatus,
+
+    var cancelledAt: LocalDateTime? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     val member: Member,
 
     @OneToMany(mappedBy = "reserve")
     val seatList: MutableList<Seat> = mutableListOf()
-): BaseTime()
+): BaseTime() {
+
+    fun cancel() {
+        if (this.status == ReserveStatus.CANCELLED) {
+            throw ReserveException(HttpStatus.CONFLICT, ErrorCode.ALREADY_CANCELLED)
+        }
+        this.status = ReserveStatus.CANCELLED
+        this.cancelledAt = LocalDateTime.now()
+    }
+}
