@@ -18,6 +18,7 @@ class Member(
 
     val name: String,
 
+    @Enumerated(EnumType.STRING)
     val role: Role,
 
     val email: String,

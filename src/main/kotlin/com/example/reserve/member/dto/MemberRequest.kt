@@ -10,8 +10,6 @@ data class MemberRequest (
 
     val name: String,
 
-    val role: Role = Role.MEMBER,
-
     val email: String,
 
 ) {
@@ -20,7 +18,7 @@ data class MemberRequest (
             username = username,
             password = password,
             name = name,
-            role = role,
+            role = Role.MEMBER,
             email = email,
         )
     }

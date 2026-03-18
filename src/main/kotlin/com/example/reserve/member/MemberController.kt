@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
-@RequestMapping("/api/member")
+@RequestMapping("/reserve/member")
 @RestController
 class MemberController(
     private val memberService: MemberService

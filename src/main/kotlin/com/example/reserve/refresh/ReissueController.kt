@@ -11,7 +11,7 @@ class ReissueController(
     private val reissueService: ReissueService
 ) {
 
-    @PostMapping("/api/reToken")
+    @PostMapping("/reserve/reToken")
     fun reToken(
         request: HttpServletRequest,
         response: HttpServletResponse

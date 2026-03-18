@@ -52,19 +52,33 @@ class SecurityConfig(
             .httpBasic { it.disable() }
             .authorizeHttpRequests {
                 it
-                    .requestMatchers("/api/member/**").permitAll()
-                    .requestMatchers("/api/seat/**").permitAll()
-                    .requestMatchers("/api/performanceSchedule/**").permitAll()
-                    .requestMatchers("/api/performance/**").permitAll()
-                    .requestMatchers("/api/reserve").permitAll()
-                    .requestMatchers("/api/reserve/**").permitAll()
-                    .requestMatchers("/api/venue/**").permitAll()
-                    .requestMatchers("/login", "/logout", "/api/reToken", "/api/init").permitAll()
-                    .requestMatchers("/admin").hasRole("ADMIN")
+                    // 인증/토큰
+                    .requestMatchers("/reserve/login", "/reserve/logout", "/reserve/reToken").permitAll()
+
+                    // 회원가입, 유효성 검사
+                    .requestMatchers(HttpMethod.POST, "/reserve/member/create").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/reserve/member/check/validation/**").permitAll()
+
+                    // 공연/좌석 조회 (읽기만 공개)
+                    .requestMatchers(HttpMethod.GET, "/reserve/venue/get/list").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/reserve/performanceSchedule/get/list/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/reserve/seat/get/list/**").permitAll()
+
+                    // 테스트 데이터 초기화
+                    .requestMatchers(HttpMethod.POST, "/reserve/init", "/reserve/init/**", "/reserve/init/admin/**").permitAll()
+
+                    // 관리자 전용 (생성)
+                    .requestMatchers(HttpMethod.POST, "/reserve/venue/create").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/reserve/performance/create").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/reserve/performanceSchedule/create").hasRole("ADMIN")
+
+                    // 나머지 (예약, 취소, 리워드, 내 정보 등) → 인증 필요
                     .anyRequest().authenticated()
             }
             .addFilterAt(
-                LoginFilter(authenticationManager(), jwtUtil, refreshRepository),
+                LoginFilter(authenticationManager(), jwtUtil, refreshRepository).apply {
+                    setFilterProcessesUrl("/reserve/login")
+                },
                 UsernamePasswordAuthenticationFilter::class.java
             )
             // LoginFilter 뒤에 JwtFilter를 위치시켜서, 로그인 요청은 JwtFilter를 거치지 않게 합니다.

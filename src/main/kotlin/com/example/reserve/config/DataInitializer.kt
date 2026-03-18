@@ -1,5 +1,8 @@
 package com.example.reserve.config
 
+import com.example.reserve.member.Member
+import com.example.reserve.member.MemberRepository
+import com.example.reserve.member.Role
 import com.example.reserve.performance.Performance
 import com.example.reserve.performance.repository.PerformanceRepository
 import com.example.reserve.performanceSchedule.PerformanceSchedule
@@ -9,7 +12,12 @@ import com.example.reserve.seat.repository.SeatRepository
 import com.example.reserve.venue.Venue
 import com.example.reserve.venue.VenueRepository
 import org.springframework.http.ResponseEntity
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.transaction.annotation.Transactional
+import com.example.reserve.reserveException.ErrorCode
+import com.example.reserve.reserveException.ReserveException
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDateTime
@@ -19,10 +27,12 @@ class DataInitController(
     private val venueRepository: VenueRepository,
     private val performanceRepository: PerformanceRepository,
     private val performanceScheduleRepository: PerformanceScheduleRepository,
-    private val seatRepository: SeatRepository
+    private val seatRepository: SeatRepository,
+    private val memberRepository: MemberRepository,
+    private val passwordEncoder: PasswordEncoder
 ) : Loggable {
 
-    @PostMapping("/api/init")
+    @PostMapping("/reserve/init")
     @Transactional
     fun initData(): ResponseEntity<Map<String, Any>> {
         if (venueRepository.count() > 0) {
@@ -95,4 +105,29 @@ class DataInitController(
             "seats" to allSeats.size
         ))
     }
+
+    @PostMapping("/reserve/init/admin/{key}")
+    @Transactional
+    fun initAdmin(@PathVariable("key") key: String): String {
+        if (key != "reserve-admin-key") {
+            throw ReserveException(HttpStatus.FORBIDDEN, ErrorCode.UNAUTHORIZED_ACCESS)
+        }
+
+        if (memberRepository.existsByUsername("admin")) {
+            return "관리자 계정이 이미 존재합니다."
+        }
+
+        memberRepository.save(
+            Member(
+                username = "admin",
+                password = passwordEncoder.encode("admin1234"),
+                name = "관리자",
+                role = Role.ADMIN,
+                email = "admin@reserve.com"
+            )
+        )
+        log.info { "관리자 계정 생성 완료 (username: admin)" }
+        return "관리자 계정 생성 완료"
+    }
+
 }

@@ -26,7 +26,7 @@ class CustomLogoutFilter(
     private fun doFilter(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val requestUri = request.requestURI
 
-        if (!requestUri.matches(Regex("^/logout$"))) {
+        if (!requestUri.matches(Regex("^/reserve/logout$"))) {
             filterChain.doFilter(request, response)
             return
         }
