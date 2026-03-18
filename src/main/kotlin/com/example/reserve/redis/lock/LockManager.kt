@@ -58,11 +58,9 @@ class LockManager(
     fun unlock(lock: RLock?) {
         if (lock == null) return
         try {
-            if (lock.isHeldByCurrentThread) {
-                lock.unlock()
-            } else {
-                log.warn { "Lock이 현재 스레드 소유가 아님 - leaseTime 만료로 이미 해제된 것으로 추정" }
-            }
+            lock.unlock()
+        } catch (e: IllegalMonitorStateException) {
+            log.warn { "Lock이 이미 해제되었거나 현재 스레드 소유가 아님" }
         } catch (e: Exception) {
             log.error(e) { "Lock 해제 실패" }
         }

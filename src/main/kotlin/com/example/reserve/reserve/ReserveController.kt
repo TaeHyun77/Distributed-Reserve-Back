@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@RequestMapping("/api/reserve")
+@RequestMapping("/reserve")
 @RestController
 class ReserveController(
     private val reserveFacadeService: ReserveFacadeService,
@@ -46,10 +46,10 @@ class ReserveController(
     ) = reserveService.cancelReserve(reserveNumber, userDetails.username)
 
     // 예약 목록 반환
-    @GetMapping("/get/list/{username}")
+    @GetMapping("/get/list")
     fun getUserReservations(
-        @PathVariable("username") username: String
+        @AuthenticationPrincipal userDetails: CustomUserDetails
     ): List<ReserveResponse> {
-        return reserveService.getUserReservations(username)
+        return reserveService.getUserReservations(userDetails.username)
     }
 }
