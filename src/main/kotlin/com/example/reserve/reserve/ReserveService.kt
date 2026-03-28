@@ -1,8 +1,11 @@
 package com.example.reserve.reserve
 
 import com.example.reserve.config.Loggable
+import com.example.reserve.email.EmailService
+import com.example.reserve.email.dto.ReservationEmailData
 import com.example.reserve.member.Member
 import com.example.reserve.member.MemberService
+import com.example.reserve.performanceSchedule.PerformanceSchedule
 import com.example.reserve.performanceSchedule.PerformanceScheduleService
 import com.example.reserve.reserve.dto.ReserveRequest
 import com.example.reserve.reserve.dto.ReserveResponse
@@ -20,7 +23,8 @@ class ReserveService(
     private val reserveRepository: ReserveRepository,
     private val seatService: SeatService,
     private val performanceScheduleService: PerformanceScheduleService,
-    private val memberService: MemberService
+    private val memberService: MemberService,
+    private val emailService: EmailService
 ) : Loggable {
 
     @Transactional
@@ -40,6 +44,9 @@ class ReserveService(
         // 예약 생성 및 좌석 배정
         val savedReserve = createReserve(reserveRequest, totalAmount, actualRewardDiscount, finalAmount, performanceSchedule.id!!, member)
         seatService.reserveSeats(seats, savedReserve)
+
+        // 예약 확인 이메일 비동기 발송
+        sendEmailAsync(savedReserve, member, performanceSchedule, seats.map { it.seatNumber })
 
         return ReserveResponse.from(savedReserve, seats.map { it.seatNumber })
     }
@@ -93,11 +100,16 @@ class ReserveService(
             throw ReserveException(HttpStatus.FORBIDDEN, ErrorCode.UNAUTHORIZED_ACCESS)
         }
 
+        val seatNumbers = reserve.seatList.map { it.seatNumber }
         reserve.cancel()
 
         val member = memberService.getMemberByUsernameWithLock(username)
         member.increaseCreditAndReward(reserve.finalAmount, reserve.rewardDiscountAmount)
         seatService.releaseSeats(reserve.seatList)
+
+        // 취소 확인 이메일 비동기 발송
+        val performanceSchedule = performanceScheduleService.getPerformanceSchedule(reserve.performanceScheduleId)
+        sendEmailAsync(reserve, member, performanceSchedule, seatNumbers)
     }
 
     // 사용자의 예약 내역 반환
@@ -105,6 +117,35 @@ class ReserveService(
     fun getUserReservations(username: String): List<ReserveResponse> {
         return reserveRepository.findByMemberUsernameAndStatus(username, ReserveStatus.RESERVED)
             .map(ReserveResponse::from)
+    }
+
+    // 이메일 데이터 조립 및 비동기 발송
+    private fun sendEmailAsync(
+        reserve: Reserve,
+        member: Member,
+        performanceSchedule: PerformanceSchedule,
+        seatNumbers: List<String>
+    ) {
+        emailService.sendReservationEmail(
+            ReservationEmailData(
+                toEmail = member.email,
+                memberName = member.name,
+                reservationNumber = reserve.reservationNumber,
+                status = reserve.status,
+                totalAmount = reserve.totalAmount,
+                rewardDiscountAmount = reserve.rewardDiscountAmount,
+                finalAmount = reserve.finalAmount,
+                seatNumbers = seatNumbers,
+                performanceTitle = performanceSchedule.performance.title,
+                performanceType = performanceSchedule.performance.type,
+                venueName = performanceSchedule.venue.name,
+                venueLocation = performanceSchedule.venue.location,
+                startTime = performanceSchedule.startTime,
+                endTime = performanceSchedule.endTime,
+                reservedAt = reserve.createdAt,
+                cancelledAt = reserve.cancelledAt
+            )
+        )
     }
 
     // 결제 가능 여부 파악
