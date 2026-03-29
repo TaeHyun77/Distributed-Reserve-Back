@@ -25,6 +25,8 @@ Frontend : React, JavaScript
 
 Database/Cache : MySQL, Redis ( Redisson 기반 분산 락 )<br><br>
 
+Etc : SMTP
+
 ### 동시성 이슈
 ---
 분산 서버 환경에서는 여러 인스턴스가 동시에 동일한 자원에 접근하거나 변경하면서 동시성 문제가 발생할 수 있습니다. 
