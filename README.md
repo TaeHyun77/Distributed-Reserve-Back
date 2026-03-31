@@ -23,9 +23,9 @@ Backend : SpringBoot, Spring Data JPA, Kotlin
 
 Frontend : React, JavaScript
 
-Database/Cache : MySQL, Redis ( Redisson 기반 분산 락 )<br><br>
+Database/Cache : MySQL, Redis ( Redisson 기반 분산 락 )
 
-Etc : SMTP
+Etc : SMTP<br><br>
 
 ### 동시성 이슈
 ---
