@@ -31,19 +31,32 @@ class SeatService(
     }
 
     // 예약하려는 좌석의 유효성 파악
-    fun getAvailableSeats(
-        seats: List<String>,
+    fun getAvailableSeatsWithLock(
+        seatNumbers: List<String>,
         performanceScheduleId: Long
     ): List<Seat> {
-        return seats.map { seatNumber ->
-            val seat = seatRepository.findByPerformanceScheduleIdAndSeatNumber(performanceScheduleId, seatNumber)
-                ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_SEAT_INFO)
 
-            if (seat.isReserved) {
-                throw ReserveException(HttpStatus.CONFLICT, ErrorCode.SEAT_ALREADY_RESERVED)
-            }
-            seat
+        // 좌석들에 대해 비관적 락
+        val seats = seatRepository.findAllByPerformanceScheduleIdAndSeatNumbersWithLock(
+            performanceScheduleId,
+            seatNumbers
+        )
+
+        // 존재하는 좌석인지 체크
+        val foundSeatNumbers = seats.map { it.seatNumber }.toSet()
+
+        val notFound = seatNumbers.filter { it !in foundSeatNumbers }
+        if (notFound.isNotEmpty()) {
+            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_SEAT_INFO)
         }
+
+        // 좌석들의 상태를 체크하여 통해 데드락을 방지
+        val alreadyReserved = seats.filter { it.isReserved }
+        if (alreadyReserved.isNotEmpty()) {
+            throw ReserveException(HttpStatus.CONFLICT, ErrorCode.SEAT_ALREADY_RESERVED)
+        }
+
+        return seats
     }
 
     // 특정 공연에서 상영 중인 영화의 좌석 목록 조회

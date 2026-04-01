@@ -12,8 +12,8 @@ globs:
 
 ## 핵심 규칙
 1. **키 정렬 필수**: `tryMultiLock()`에서 `keys.sorted()` 유지. 제거 시 데드락 위험
-2. **leaseTime 미지정 유지**: watchdog(30초 자동 갱신)이 활성화됨. leaseTime 설정 시 watchdog 비활성화
-3. **waitTime 기본값**: 5초 (`WAIT_TIME = 5L`)
+2. **leaseTime 3초 고정**: `LEASE_TIME=3L`로 Redis hard timeout 보장. watchdog 미사용
+3. **waitTime 기본값**: 3초 (`WAIT_TIME = 3L`)
 4. **락 획득 실패**: `ReserveException(CONFLICT, FAILED_TO_ACQUIRED_LOCK)` 반환
 5. **unlock 안전성**: `IllegalMonitorStateException` 캐치로 이미 해제된 락 처리
 6. **try-finally**: `runWithLock()`에서 task 실행 후 반드시 finally 블록에서 unlock

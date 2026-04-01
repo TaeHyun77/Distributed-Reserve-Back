@@ -66,7 +66,7 @@ Redis 분산 락 + JPA 비관적 락 기반의 동시성 제어 예약 백엔드
 
 1. **락 키 정렬 필수** — `LockManager.tryMultiLock()`의 `keys.sorted()` 제거 금지. 정렬 없으면 데드락 발생
 2. **락 순서 고정** — 반드시 Redis 분산 락 → JPA 비관적 락 순서. 역순 시 분산 락이 DB 커넥션을 보호하지 못함
-3. **Watchdog 메커니즘** — `LockManager.tryLock()`에서 `leaseTime` 미지정으로 Redisson watchdog(30초 자동 갱신) 활성화. `leaseTime`을 명시하면 watchdog 비활성화되므로 주의
+3. **leaseTime 고정(3초)** — `LockManager`에서 `LEASE_TIME=3L`로 고정. Redis가 hard timeout을 보장하여 락이 무한 점유되지 않음. watchdog 미사용
 4. **LazyInitializationException** — `@Transactional` 밖에서 LAZY 연관관계 접근 금지. 특히 `Reserve.member`, `Seat.performanceSchedule`
 5. **JPA dirty checking** — Entity 필드 변경 시 `save()` 호출 없이도 트랜잭션 커밋 시점에 자동 UPDATE. `member.decreaseCreditAndReward()` 등이 이 방식
 6. **saveAndFlush vs save** — `@Transactional` 내에서는 `save()`로 충분. `saveAndFlush()`는 불필요한 즉시 flush 유발
@@ -92,7 +92,7 @@ Redis 분산 락 + JPA 비관적 락 기반의 동시성 제어 예약 백엔드
 - 한글 응답 필수 (식별자만 영문)
 - 락 순서: Redis 분산 락 → JPA 비관적 락 (역순 금지)
 - 멀티 락 키는 반드시 정렬 후 획득
-- leaseTime 지정 금지 (watchdog 비활성화 방지)
+- leaseTime=3초 고정 (Redis hard timeout 보장)
 - `throw ReserveException(HttpStatus, ErrorCode)` 패턴 준수
 - `Loggable` 인터페이스 구현 필수 (Service/Controller)
 - DTO 변환은 `companion object { fun from() }` 패턴

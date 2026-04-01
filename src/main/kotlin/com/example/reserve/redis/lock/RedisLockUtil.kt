@@ -1,5 +1,6 @@
 package com.example.reserve.redis.lock
 
+import com.example.reserve.config.Loggable
 import com.example.reserve.reserveException.ErrorCode
 import com.example.reserve.reserveException.ReserveException
 import org.redisson.api.RLock
@@ -9,7 +10,8 @@ import org.springframework.stereotype.Component
 @Component
 class RedisLockUtil(
     private val lockManager: LockManager
-) {
+): Loggable {
+
     // 단일 키용 락
     fun <T> acquireLockAndRun(
         key: String,
@@ -38,7 +40,10 @@ class RedisLockUtil(
         return runWithLock(lock, task)
     }
 
-    private fun <T> runWithLock(lock: RLock, task: () -> T): T {
+    private fun <T> runWithLock(
+        lock: RLock,
+        task: () -> T
+    ): T {
         return try {
             task()
         } finally {

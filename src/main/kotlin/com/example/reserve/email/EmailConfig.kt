@@ -7,7 +7,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import java.util.concurrent.Executor
 
 // 이메일 비동기 발송 설정
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 @Configuration
 class EmailConfig {
 

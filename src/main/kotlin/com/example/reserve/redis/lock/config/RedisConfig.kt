@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
-
+// RedissonClient를 사용하기 위해 Config 설정을 빈으로 등록
 @Configuration
 class RedisConfig(
     @Value("\${spring.data.redis.host}") val host: String,

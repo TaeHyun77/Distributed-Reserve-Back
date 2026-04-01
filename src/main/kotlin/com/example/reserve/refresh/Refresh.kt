@@ -21,5 +21,4 @@ class Refresh(
 
     @Column
     val expiration: Long
-) : BaseTime() {
-}
+) : BaseTime()
