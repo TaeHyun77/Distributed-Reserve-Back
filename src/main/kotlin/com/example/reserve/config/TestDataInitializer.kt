@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @RestController
@@ -86,5 +87,49 @@ class TestDataInitializer(
         reserveRepository.deleteAllByScheduleId(scheduleId) // 2. 예약 삭제
         memberRepository.resetCreditForLoadTest() // 3. member의 credit 원상복구
         return ResponseEntity.ok("초기화 완료")
+    }
+
+    companion object {
+        private const val REWARD_TEST_USERNAME = "@Reward123"
+        private const val REWARD_TEST_PASSWORD = "reward1234"
+    }
+
+    @PostMapping("/reserve/init/reward-test")
+    @Transactional
+    fun initRewardTestData(): ResponseEntity<Map<String, Any>> {
+        val existing = memberRepository.findByUsername(REWARD_TEST_USERNAME)
+
+        if (existing != null) {
+            existing.reward = 0
+            existing.lastRewardDate = null
+            return ResponseEntity.ok(mapOf(
+                "message" to "리워드 테스트 유저 초기화 완료",
+                "username" to REWARD_TEST_USERNAME
+            ))
+        }
+
+        memberRepository.save(
+            Member(
+                username = REWARD_TEST_USERNAME,
+                password = passwordEncoder.encode(REWARD_TEST_PASSWORD),
+                credit = 300_000,
+                reward = 0,
+                email = "rewardtest@test.com",
+                name = "리워드테스트유저",
+                role = Role.MEMBER
+            )
+        )
+
+        return ResponseEntity.ok(mapOf(
+            "message" to "리워드 테스트 유저 생성 완료",
+            "username" to REWARD_TEST_USERNAME
+        ))
+    }
+
+    @PostMapping("/reserve/init/reward-test/cleanup")
+    @Transactional
+    fun cleanupRewardTestData(): ResponseEntity<String> {
+        memberRepository.deleteByUsername(REWARD_TEST_USERNAME)
+        return ResponseEntity.ok("리워드 테스트 유저 삭제 완료")
     }
 }

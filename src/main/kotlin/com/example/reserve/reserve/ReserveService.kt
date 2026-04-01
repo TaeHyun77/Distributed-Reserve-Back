@@ -31,7 +31,11 @@ class ReserveService(
     fun reserve(reserveRequest: ReserveRequest, username: String): ReserveResponse {
         val member = memberService.getMemberByUsernameWithLock(username)
         val performanceSchedule = performanceScheduleService.getPerformanceSchedule(reserveRequest.performanceScheduleId)
-        val seats = seatService.getAvailableSeats(reserveRequest.reservedSeat, reserveRequest.performanceScheduleId)
+
+        val seats = seatService.getAvailableSeatsWithLock(
+            reserveRequest.reservedSeat,
+            reserveRequest.performanceScheduleId
+        )
 
         // 결제 처리
         val (totalAmount, actualRewardDiscount, finalAmount) = processPayment(

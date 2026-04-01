@@ -38,7 +38,6 @@ class LoginFilter(
                                           chain: FilterChain,
                                           authentication: Authentication) {
 
-        log.info { "Login Success" }
         val userDetails: CustomUserDetails = authentication.principal as CustomUserDetails
 
         val username = userDetails.username
@@ -47,22 +46,14 @@ class LoginFilter(
         val role = authentication.authorities.first().authority
 
         val accessToken = jwtUtil.createToken(username, name, email, role,"access", 600_000L)
-        val refresh = jwtUtil.createToken(username, name, email, role,"refresh", 86_400_000L)
+        val refreshToken = jwtUtil.createToken(username, name, email, role,"refresh", 86_400_000L)
 
-        log.info { "accessToken $accessToken" }
-        log.info { "refresh $refresh" }
-
-        createRefresh(username, refresh, 86_400_000L)
+        val refresh = Refresh(username = username,  refresh = refreshToken, expiration = 86400000L)
+        refreshRepository.save(refresh)
 
         response.setHeader("access", accessToken)
-        response.addCookie(createCookie("refresh", refresh))
+        response.addCookie(createCookie("refresh", refreshToken))
         response.status = HttpStatus.OK.value()
-    }
-
-    fun createRefresh(username: String, refresh: String, expired: Long) {
-        val refresh = Refresh(username = username, refresh = refresh, expiration = expired)
-
-        refreshRepository.save(refresh)
     }
 
     override fun unsuccessfulAuthentication(

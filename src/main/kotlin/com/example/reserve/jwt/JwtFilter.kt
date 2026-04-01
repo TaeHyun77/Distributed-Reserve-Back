@@ -1,6 +1,7 @@
 package com.example.reserve.jwt
 
 import com.example.reserve.config.Loggable
+import com.example.reserve.member.Member
 import com.example.reserve.member.MemberRepository
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -43,14 +44,11 @@ class JwtFilter(
         }
 
         val username: String = jwtUtil.getUsername(accessToken)
+        val name = jwtUtil.getName(accessToken)
+        val email = jwtUtil.getEmail(accessToken)
+        val role = jwtUtil.getRole(accessToken)
 
-        val member = memberRepository.findByUsername(username)
-            ?: run {
-                log.warn { "회원 정보를 찾을 수 없습니다. username: $username" }
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Member not found")
-                return
-            }
-
+        val member = Member(username = username, password = "", name = name, role = role, email = email)
         val customUserDetails = CustomUserDetails(member)
         val authToken = UsernamePasswordAuthenticationToken(
             customUserDetails, null, customUserDetails.authorities

@@ -31,9 +31,9 @@ class JwtUtil(
     }
 
     fun getRole(token: String): Role {
-        val roleName = getClaim(token, "role")
+        val roleName = getClaim(token, "role").removePrefix("ROLE_")
 
-        return Role.valueOf(roleName) // Enum 변환
+        return Role.valueOf(roleName)
     }
 
     fun getCategory(token: String): String {
@@ -64,7 +64,6 @@ class JwtUtil(
             .claim("category", category)
             .expiration(expiredDate) // 토큰 만료 시간
             .issuedAt(now) // 토큰의 발급 시간
-            .subject("AccessToken") // subject: 이 토큰이 어느 의미를 가지는지 구분하기 위한 값
             .signWith(secretKey)
             .compact()
     }

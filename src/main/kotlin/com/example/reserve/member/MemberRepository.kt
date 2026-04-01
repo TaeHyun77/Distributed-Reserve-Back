@@ -19,4 +19,6 @@ interface MemberRepository: JpaRepository<Member, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT m FROM Member m WHERE m.username = :username")
     fun findByUsernameWithLock(username: String): Member?
+
+    fun deleteByUsername(username: String)
 }
