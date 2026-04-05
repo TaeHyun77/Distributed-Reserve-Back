@@ -2,24 +2,30 @@
 package com.example.reserve.jwt
 
 import com.example.reserve.config.Loggable
+import com.example.reserve.reserveException.ErrorCode
+import com.example.reserve.reserveException.ErrorCodeDto
+import com.example.reserve.reserveException.ReserveException
 import com.example.reserve.util.createCookie
 import com.example.reserve.refresh.Refresh
 import com.example.reserve.refresh.RefreshRepository
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.InternalAuthenticationServiceException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import java.time.LocalDateTime
 
 class LoginFilter(
     private val authenticationManager: AuthenticationManager,
     private val jwtUtil: JwtUtil,
-    private val refreshRepository: RefreshRepository
+    private val refreshRepository: RefreshRepository,
+    private val objectMapper: ObjectMapper
 ): UsernamePasswordAuthenticationFilter(), Loggable {
 
     override fun attemptAuthentication(request: HttpServletRequest, response: HttpServletResponse): Authentication {
@@ -62,6 +68,26 @@ class LoginFilter(
         failed: AuthenticationException
     ) {
         log.error(failed) { "로그인 실패: ${failed.message}" }
+
+        val errorCode = extractErrorCode(failed)
         response.status = HttpServletResponse.SC_UNAUTHORIZED
+        response.contentType = MediaType.APPLICATION_JSON_VALUE
+        response.characterEncoding = "UTF-8"
+
+        val errorBody = ErrorCodeDto(
+            code = errorCode.errorCode,
+            message = errorCode.message,
+            detail = null
+        )
+        objectMapper.writeValue(response.writer, errorBody)
+    }
+
+    private fun extractErrorCode(failed: AuthenticationException): ErrorCode {
+        val cause = (failed as? InternalAuthenticationServiceException)?.cause
+        if (cause is ReserveException) {
+            return cause.errorCode
+        }
+        // 비밀번호 불일치 등 기타 인증 실패
+        return ErrorCode.LOGIN_FAILED
     }
 }

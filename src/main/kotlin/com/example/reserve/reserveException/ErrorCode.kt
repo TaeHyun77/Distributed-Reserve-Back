@@ -44,16 +44,20 @@ enum class ErrorCode (
 
     DUPLICATED_USERNAME("DUPLICATED_USERNAME", "중복된 username 값 입니다."),
 
-
-    // REWARD
-    REWARD_ALREADY_CLAIMED("REWARD_ALREADY_CLAIMED", "오늘 이미 리워드를 지급받았습니다."),
-
-
     // ECT
     FAILED_TO_ACQUIRED_LOCK("REDIS_FAILED_TO_ACQUIRED_LOCK", "레디스에서 Lock을 획득 실패"),
 
     NOT_EXIST_LOCK_KEY("REDIS_NOT_EXIST_LOCK_KEY", "레디스 lock 키가 존재하지 않습니다."),
 
     // AUTH
-    UNAUTHORIZED_ACCESS("UNAUTHORIZED_ACCESS", "해당 작업에 대한 권한이 없습니다.");
+    UNAUTHORIZED_ACCESS("UNAUTHORIZED_ACCESS", "해당 작업에 대한 권한이 없습니다."),
+
+    LOGIN_FAILED("LOGIN_FAILED", "아이디 또는 비밀번호가 올바르지 않습니다."),
+
+    // EMAIL VERIFICATION
+    EMAIL_NOT_VERIFIED("EMAIL_NOT_VERIFIED", "이메일 인증이 완료되지 않았습니다."),
+
+    INVALID_VERIFICATION_CODE("INVALID_VERIFICATION_CODE", "인증번호가 올바르지 않습니다."),
+
+    VERIFICATION_CODE_EXPIRED("VERIFICATION_CODE_EXPIRED", "인증번호가 만료되었습니다.");
 }

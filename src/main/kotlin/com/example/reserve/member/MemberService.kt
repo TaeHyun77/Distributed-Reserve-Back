@@ -1,6 +1,7 @@
 package com.example.reserve.member
 
 import com.example.reserve.config.Loggable
+import com.example.reserve.email.EmailVerificationService
 import com.example.reserve.idempotency.IdempotencyService
 import com.example.reserve.member.dto.MemberRequest
 import com.example.reserve.member.dto.MemberResponse
@@ -20,6 +21,7 @@ import java.time.ZoneId
 class MemberService(
     private val memberRepository: MemberRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val emailVerificationService: EmailVerificationService,
 ): Loggable {
 
     companion object {
@@ -37,6 +39,10 @@ class MemberService(
     // 사용자 생성
     @Transactional
     fun saveMember(memberRequest: MemberRequest) {
+        if (!emailVerificationService.isEmailVerified(memberRequest.email)) {
+            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.EMAIL_NOT_VERIFIED)
+        }
+
         if (memberRepository.existsByUsername(memberRequest.username)) {
             throw ReserveException(HttpStatus.CONFLICT, ErrorCode.DUPLICATED_USERNAME)
         }
