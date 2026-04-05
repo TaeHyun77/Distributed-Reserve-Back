@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>이메일 인증</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 40px 0;">
+    <tr>
+        <td align="center">
+            <table width="480" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <tr>
+                    <td style="padding: 40px 32px 24px; text-align: center; border-bottom: 2px solid #4A90D9;">
+                        <h1 style="margin: 0; font-size: 22px; color: #333333;">이메일 인증</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 32px;">
+                        <p style="margin: 0 0 16px; font-size: 15px; color: #555555; line-height: 1.6;">
+                            회원가입을 위한 이메일 인증번호입니다.
+                        </p>
+                        <div style="margin: 24px 0; padding: 20px; background-color: #f0f5ff; border-radius: 6px; text-align: center;">
+                            <span th:text="${code}" style="font-size: 32px; font-weight: bold; color: #4A90D9; letter-spacing: 8px;">000000</span>
+                        </div>
+                        <p style="margin: 16px 0 0; font-size: 13px; color: #999999; line-height: 1.5;">
+                            인증번호는 <strong>5분간</strong> 유효합니다.<br/>
+                            본인이 요청하지 않은 경우 이 이메일을 무시해 주세요.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

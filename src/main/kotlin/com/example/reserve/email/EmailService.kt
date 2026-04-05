@@ -47,6 +47,27 @@ class EmailService(
         }
     }
 
+    // 인증번호 이메일 비동기 발송
+    @Async("emailTaskExecutor")
+    fun sendVerificationCodeEmail(email: String, code: String) {
+        try {
+            val context = Context()
+            context.setVariable("code", code)
+            val body = templateEngine.process("verification-email", context)
+
+            val message: MimeMessage = mailSender.createMimeMessage()
+            val helper = MimeMessageHelper(message, false, "UTF-8")
+            helper.setTo(email)
+            helper.setSubject("[예약 시스템] 이메일 인증번호")
+            helper.setText(body, true)
+
+            mailSender.send(message)
+            log.info { "인증번호 이메일 발송 완료 - 수신: $email" }
+        } catch (e: Exception) {
+            log.error(e) { "인증번호 이메일 발송 실패 - 수신: $email" }
+        }
+    }
+
     // Thymeleaf 템플릿으로 HTML 본문 생성
     private fun buildEmailBody(data: ReservationEmailData): String {
         val context = Context()

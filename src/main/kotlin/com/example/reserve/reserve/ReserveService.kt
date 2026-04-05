@@ -130,26 +130,30 @@ class ReserveService(
         performanceSchedule: PerformanceSchedule,
         seatNumbers: List<String>
     ) {
-        emailService.sendReservationEmail(
-            ReservationEmailData(
-                toEmail = member.email,
-                memberName = member.name,
-                reservationNumber = reserve.reservationNumber,
-                status = reserve.status,
-                totalAmount = reserve.totalAmount,
-                rewardDiscountAmount = reserve.rewardDiscountAmount,
-                finalAmount = reserve.finalAmount,
-                seatNumbers = seatNumbers,
-                performanceTitle = performanceSchedule.performance.title,
-                performanceType = performanceSchedule.performance.type,
-                venueName = performanceSchedule.venue.name,
-                venueLocation = performanceSchedule.venue.location,
-                startTime = performanceSchedule.startTime,
-                endTime = performanceSchedule.endTime,
-                reservedAt = reserve.createdAt,
-                cancelledAt = reserve.cancelledAt
+        try {
+            emailService.sendReservationEmail(
+                ReservationEmailData(
+                    toEmail = member.email,
+                    memberName = member.name,
+                    reservationNumber = reserve.reservationNumber,
+                    status = reserve.status,
+                    totalAmount = reserve.totalAmount,
+                    rewardDiscountAmount = reserve.rewardDiscountAmount,
+                    finalAmount = reserve.finalAmount,
+                    seatNumbers = seatNumbers,
+                    performanceTitle = performanceSchedule.performance.title,
+                    performanceType = performanceSchedule.performance.type,
+                    venueName = performanceSchedule.venue.name,
+                    venueLocation = performanceSchedule.venue.location,
+                    startTime = performanceSchedule.startTime,
+                    endTime = performanceSchedule.endTime,
+                    reservedAt = reserve.createdAt,
+                    cancelledAt = reserve.cancelledAt
+                )
             )
-        )
+        } catch (e: Exception) {
+            log.error(e) { "이메일 발송 요청 실패 - 예약번호: ${reserve.reservationNumber}" }
+        }
     }
 
     // 결제 가능 여부 파악

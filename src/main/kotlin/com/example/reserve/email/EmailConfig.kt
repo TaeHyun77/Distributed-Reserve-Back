@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import java.util.concurrent.Executor
+import java.util.concurrent.ThreadPoolExecutor
 
 // 이메일 비동기 발송 설정
 @EnableAsync(proxyTargetClass = true)
@@ -15,10 +16,11 @@ class EmailConfig {
     fun emailTaskExecutor(): Executor {
         val executor = ThreadPoolTaskExecutor()
 
-        executor.corePoolSize = 2
-        executor.maxPoolSize = 5
-        executor.queueCapacity = 50
+        executor.corePoolSize = 20
+        executor.maxPoolSize = 50
+        executor.queueCapacity = 1000
         executor.setThreadNamePrefix("email-")
+        executor.setRejectedExecutionHandler(ThreadPoolExecutor.CallerRunsPolicy())
         executor.initialize()
         return executor
     }

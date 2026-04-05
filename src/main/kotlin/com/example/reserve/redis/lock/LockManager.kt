@@ -63,8 +63,10 @@ class LockManager(
                 lock.unlock()
                 log.debug { "Lock 해제 성공" }
             } else {
-                log.warn { "Lock이 현재 스레드 소유가 아닙니다. - 해제 생략" }
+                log.warn { "락이 이미 만료되었거나 현재 스레드 소유가 아닙니다. unlock 생략" }
             }
+        } catch (e: IllegalMonitorStateException) {
+            log.warn(e) { "현재 스레드가 소유하지 않은 락입니다. unlock 생략" }
         } catch (e: Exception) {
             log.error(e) { "Lock 해제 중 예외 발생" }
         }

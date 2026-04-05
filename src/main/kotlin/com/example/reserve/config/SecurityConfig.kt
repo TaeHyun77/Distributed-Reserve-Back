@@ -7,6 +7,7 @@ import com.example.reserve.jwt.JwtUtil
 import com.example.reserve.jwt.LoginFilter
 import com.example.reserve.member.MemberRepository
 import com.example.reserve.refresh.RefreshRepository
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -31,7 +32,8 @@ class SecurityConfig(
     private val authenticationConfiguration: AuthenticationConfiguration,
     private val jwtUtil: JwtUtil,
     private val refreshRepository: RefreshRepository,
-    private val memberRepository: MemberRepository
+    private val memberRepository: MemberRepository,
+    private val objectMapper: ObjectMapper
 ) {
 
     @Bean
@@ -52,12 +54,16 @@ class SecurityConfig(
             .httpBasic { it.disable() }
             .authorizeHttpRequests {
                 it
+                    // 에러 페이지
+                    .requestMatchers("/error").permitAll()
+
                     // 인증/토큰
                     .requestMatchers("/reserve/login", "/reserve/logout", "/reserve/reToken").permitAll()
 
-                    // 회원가입, 유효성 검사
+                    // 회원가입, 유효성 검사, 이메일 인증
                     .requestMatchers(HttpMethod.POST, "/reserve/member/create").permitAll()
                     .requestMatchers(HttpMethod.GET, "/reserve/member/check/validation/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/reserve/member/email/**").permitAll()
 
                     // 공연/좌석 조회 (읽기만 공개)
                     .requestMatchers(HttpMethod.GET, "/reserve/venue/get/list").permitAll()
@@ -76,7 +82,7 @@ class SecurityConfig(
                     .anyRequest().authenticated()
             }
             .addFilterAt(
-                LoginFilter(authenticationManager(), jwtUtil, refreshRepository).apply {
+                LoginFilter(authenticationManager(), jwtUtil, refreshRepository, objectMapper).apply {
                     setFilterProcessesUrl("/reserve/login")
                 },
                 UsernamePasswordAuthenticationFilter::class.java

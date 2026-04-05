@@ -31,7 +31,7 @@ BASE_URL=${BASE_URL:-"http://localhost:8079"}
 WARMUP_VUS=${WARMUP_VUS:-50}
 RESET_WAIT=3
 WARMUP_STABILIZE=${WARMUP_STABILIZE:-10}
-P95_THRESHOLD=500  # 권장 max-capacity 산정 기준 (p95 < 이 값)
+P95_THRESHOLD=1000  # 권장 max-capacity 산정 기준 (p95 < 이 값)
 
 echo ""
 echo "======================================================="

@@ -67,7 +67,7 @@ dependencies {
 
 
 	// Redisson 라이브러리 의존성
-	implementation("org.redisson:redisson-spring-boot-starter:3.18.0")
+	implementation("org.redisson:redisson-spring-boot-starter:3.27.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
 
