@@ -71,27 +71,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
 
-// querydsl QClass 위치
-val generated = file("src/main/generated")
-
-// querydsl QClass 파일 생성 위치 지정
-tasks.withType<JavaCompile> {
-	options.generatedSourceOutputDirectory.set(generated)
-}
-
-// kotlin source set에 querydsl QClass 위치 추가
-sourceSets {
-	main {
-		kotlin.srcDirs += generated
-	}
-}
-
-// gradle clean 시에 QClass 디렉토리 삭제
-tasks.named("clean") {
-	doLast {
-		generated.deleteRecursively()
-	}
-}
+// QueryDSL Q-class는 kapt가 build/generated/source/kapt/main에 자동 생성하고
+// kapt 플러그인이 알아서 Kotlin source set에 등록한다.
+// ./gradlew clean 시 build/ 디렉토리 전체가 삭제되며 Q-class도 함께 사라진다.
 
 kotlin {
 	compilerOptions {

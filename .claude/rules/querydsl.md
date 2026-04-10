@@ -13,9 +13,10 @@ globs:
 3. 기본 JPA Repository가 Custom 인터페이스를 상속
 
 ## Q-class 관리
-- 생성 위치: `src/main/generated/`
-- `./gradlew clean` 시 삭제됨 → `./gradlew build`로 재생성
-- kapt 플러그인이 컴파일 시 자동 생성
+- 생성 위치: `build/generated/source/kapt/main/`
+- kapt 플러그인이 컴파일 시 자동 생성하며 Kotlin source set에 자동 등록
+- `./gradlew clean` 시 `build/` 전체가 삭제되며 Q-class도 함께 사라짐 → `./gradlew build`로 재생성
+- IntelliJ에서 `Unresolved reference 'Q...'` 발생 시 Gradle 툴 창의 재동기화(⌘⇧I) 실행
 
 ## 기존 사용처
 - `PerformanceScheduleRepositoryImpl`: 공연 일정 목록 (Performance fetch join)
