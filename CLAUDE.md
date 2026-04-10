@@ -70,7 +70,7 @@ Redis 분산 락 + JPA 비관적 락 기반의 동시성 제어 예약 백엔드
 4. **LazyInitializationException** — `@Transactional` 밖에서 LAZY 연관관계 접근 금지. 특히 `Reserve.member`, `Seat.performanceSchedule`
 5. **JPA dirty checking** — Entity 필드 변경 시 `save()` 호출 없이도 트랜잭션 커밋 시점에 자동 UPDATE. `member.decreaseCreditAndReward()` 등이 이 방식
 6. **saveAndFlush vs save** — `@Transactional` 내에서는 `save()`로 충분. `saveAndFlush()`는 불필요한 즉시 flush 유발
-7. **QueryDSL Q-class** — `./gradlew clean` 실행 시 `src/main/generated/` 삭제됨. 빌드 후 재생성 필요
+7. **QueryDSL Q-class** — kapt가 `build/generated/source/kapt/main/`에 생성. `./gradlew clean` 시 `build/` 전체가 삭제되며 Q-class도 함께 사라짐 → `./gradlew build`로 재생성. IntelliJ에서 `Unresolved reference 'Q...'` 발생 시 Gradle 재동기화 필요
 8. **CascadeType.ALL + orphanRemoval** — `Member.reserveList`, `PerformanceSchedule.seatList`에 설정됨. 부모 삭제 시 자식 연쇄 삭제
 9. **멱등성 일시적 에러 비캐싱** — `IdempotencyService`에서 `ReserveException`이 아닌 예외는 캐싱하지 않고 즉시 재전파
 

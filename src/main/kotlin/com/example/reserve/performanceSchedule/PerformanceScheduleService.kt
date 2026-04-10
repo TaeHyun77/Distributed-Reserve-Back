@@ -43,11 +43,9 @@ class PerformanceScheduleService(
             .map(PerformanceScheduleResponse::from)
     }
 
-    // 공연 정보 반환
+    // 공연 정보 반환 (performance + venue fetch join으로 단일 쿼리 조회)
     fun getPerformanceSchedule(performanceScheduleId: Long): PerformanceSchedule {
-        return performanceScheduleRepository.findById(performanceScheduleId)
-            .orElseThrow {
-                ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_INFO)
-            }
+        return performanceScheduleRepository.findByIdWithPerformanceAndVenue(performanceScheduleId)
+            ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_PERFORMANCE_INFO)
     }
 }

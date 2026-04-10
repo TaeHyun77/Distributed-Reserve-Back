@@ -16,7 +16,12 @@ interface ReserveRepository: JpaRepository<Reserve, Long> {
     @Query("DELETE FROM Reserve r WHERE r.performanceScheduleId = :scheduleId")
     fun deleteAllByScheduleId(@Param("scheduleId") scheduleId: Long)
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT r FROM Reserve r WHERE r.reservationNumber = :reserveNumber")
-    fun findByReservationNumberWithLock(reserveNumber: String): Reserve?
+    @Query("""
+      SELECT r FROM Reserve r
+      LEFT JOIN FETCH r.seatList
+      WHERE r.reservationNumber = :reserveNumber
+    """)
+    fun findByReservationNumberWithFetch(
+        @Param("reserveNumber") reserveNumber: String
+    ): Reserve?
 }

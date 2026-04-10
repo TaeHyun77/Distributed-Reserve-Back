@@ -2,6 +2,9 @@ package com.example.reserve.email
 
 import com.example.reserve.config.Loggable
 import com.example.reserve.email.dto.ReservationEmailData
+import com.example.reserve.member.Member
+import com.example.reserve.performanceSchedule.PerformanceScheduleService
+import com.example.reserve.reserve.Reserve
 import com.example.reserve.reserve.ReserveStatus
 import jakarta.mail.internet.MimeMessage
 import org.springframework.mail.javamail.JavaMailSender
@@ -16,11 +19,47 @@ import java.time.format.DateTimeFormatter
 @Service
 class EmailService(
     private val mailSender: JavaMailSender,
-    private val templateEngine: TemplateEngine
+    private val templateEngine: TemplateEngine,
+    private val performanceScheduleService: PerformanceScheduleService
 ) : Loggable {
 
     companion object {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+    }
+
+    // 이메일 데이터 조립 및 비동기 발송
+    fun sendEmailAsync(
+        reserve: Reserve,
+        member: Member,
+        performanceScheduleId: Long,
+        seatNumbers: List<String>
+    ) {
+        val performanceSchedule = performanceScheduleService.getPerformanceSchedule(performanceScheduleId);
+
+        try {
+            sendReservationEmail(
+                ReservationEmailData(
+                    toEmail = member.email,
+                    memberName = member.name,
+                    reservationNumber = reserve.reservationNumber,
+                    status = reserve.status,
+                    totalAmount = reserve.totalAmount,
+                    rewardDiscountAmount = reserve.rewardDiscountAmount,
+                    finalAmount = reserve.finalAmount,
+                    seatNumbers = seatNumbers,
+                    performanceTitle = performanceSchedule.performance.title,
+                    performanceType = performanceSchedule.performance.type,
+                    venueName = performanceSchedule.venue.name,
+                    venueLocation = performanceSchedule.venue.location,
+                    startTime = performanceSchedule.startTime,
+                    endTime = performanceSchedule.endTime,
+                    reservedAt = reserve.createdAt,
+                    cancelledAt = reserve.cancelledAt
+                )
+            )
+        } catch (e: Exception) {
+            log.error(e) { "이메일 발송 요청 실패 - 예약번호: ${reserve.reservationNumber}" }
+        }
     }
 
     // 예약/취소 확인 이메일 비동기 발송

@@ -28,4 +28,16 @@ class PerformanceScheduleRepositoryImpl(
 
         return query.fetch()
     }
+
+    // 공연 일정 단건 조회 - performance + venue를 fetch join하여 LAZY 초기화 쿼리 방지
+    override fun findByIdWithPerformanceAndVenue(id: Long): PerformanceSchedule? {
+        val ps = QPerformanceSchedule.performanceSchedule
+
+        return queryFactory
+            .selectFrom(ps)
+            .join(ps.performance).fetchJoin()
+            .join(ps.venue).fetchJoin()
+            .where(ps.id.eq(id))
+            .fetchOne()
+    }
 }
