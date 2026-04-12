@@ -7,7 +7,7 @@ data class ReserveRequest (
 
     val rewardDiscountAmount: Long = 0L,
 
-    val reservedSeat: List<String>,
+    val seatNumbers: List<String>,
 
     val performanceScheduleId: Long,
 )

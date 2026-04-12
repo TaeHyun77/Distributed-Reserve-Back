@@ -2,15 +2,16 @@ package com.example.reserve.reserve
 
 import com.example.reserve.config.Loggable
 import com.example.reserve.email.EmailService
-import com.example.reserve.email.dto.ReservationEmailData
 import com.example.reserve.member.Member
 import com.example.reserve.member.MemberService
 import com.example.reserve.performanceSchedule.PerformanceScheduleService
+import com.example.reserve.reserve.dto.PaymentResult
 import com.example.reserve.reserve.dto.ReserveRequest
 import com.example.reserve.reserve.dto.ReserveResponse
 import com.example.reserve.reserve.repository.ReserveRepository
 import com.example.reserve.reserveException.ErrorCode
 import com.example.reserve.reserveException.ReserveException
+import com.example.reserve.seat.Seat
 import com.example.reserve.seat.SeatService
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -27,82 +28,72 @@ class ReserveService(
 
     @Transactional
     fun reserve(reserveRequest: ReserveRequest, username: String): ReserveResponse {
-        // 1. 예약하려는 사용자 비관적 락 잡음
-        val member = memberService.getMemberByUsernameWithLock(username)
-
-        // 2. 예약하려는 공연 스케쥴 조회
+        // 1. 예약하려는 공연 스케쥴 정보 조회
         val performanceSchedule = performanceScheduleService.getPerformanceSchedule(reserveRequest.performanceScheduleId)
 
-        // 3. 예약하려는 좌석들의 유효성 검사 및 비관적 락 잡기
-        val seats = seatService.getAvailableSeatsWithLock(
-            reserveRequest.reservedSeat,
+        // 2. 예약하려는 좌석들의 유효성 검사 및 비관적 락 잡기 ( redis lock 만료 케이스 보안 )
+        val seats: List<Seat> = seatService.getAvailableSeatsWithLock(
+            reserveRequest.seatNumbers,
             reserveRequest.performanceScheduleId
         )
+
+        // 3. 예약하려는 사용자 비관적 락 잡음
+        val member = memberService.getMemberByUsernameWithLock(username)
 
         // 4. 결제 처리
         val (totalAmount, actualRewardDiscount, finalAmount) = processPayment(
                 performanceSchedule.performance.price,
-                reserveRequest.reservedSeat.size,
+                reserveRequest.seatNumbers.size,
                 reserveRequest.rewardDiscountAmount,
                 member
         )
 
-        // 5. 예약 생성 및 좌석 상태 변경
-        val savedReserve = createReserve(reserveRequest, totalAmount, actualRewardDiscount, finalAmount, performanceSchedule.id!!, member)
-        seatService.reserveSeats(seats, savedReserve)
-
-        // 예약 확인 이메일 비동기 발송
-        emailService.sendEmailAsync(savedReserve, member, reserveRequest.performanceScheduleId, seats.map { it.seatNumber })
-
-        return ReserveResponse.from(savedReserve, seats.map { it.seatNumber })
-    }
-
-    private fun processPayment(price: Long, seatCount: Int, requestedDiscount: Long, member: Member): Triple<Long, Long, Long> {
-        val (totalAmount, actualRewardDiscount, finalAmount) = calculatePayment(price, seatCount, requestedDiscount, member)
-
-        if (!isPayable(finalAmount, member.credit)) {
-            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_ENOUGH_CREDIT)
-        }
-
-        member.decreaseCreditAndReward(finalAmount, actualRewardDiscount)
-        return Triple(totalAmount, actualRewardDiscount, finalAmount)
-    }
-
-    private fun createReserve(
-            reserveRequest: ReserveRequest,
-            totalAmount: Long,
-            actualRewardDiscount: Long,
-            finalAmount: Long,
-            performanceScheduleId: Long,
-            member: Member
-    ): Reserve {
-        val reserve = Reserve(
+        // 5. 예약 생성 및 좌석 상태 변경 ( dirty-checking )
+        val reserve = reserveRepository.save(
+            Reserve(
                 reservationNumber = reserveRequest.reservationNumber,
                 totalAmount = totalAmount,
                 rewardDiscountAmount = actualRewardDiscount,
                 finalAmount = finalAmount,
-                performanceScheduleId = performanceScheduleId,
+                performanceScheduleId = reserveRequest.performanceScheduleId,
                 member = member,
                 status = ReserveStatus.RESERVED
+            )
         )
-        return reserveRepository.save(reserve)
+        seatService.reserveSeats(seats, reserve)
+
+        // 예약 확인 이메일 비동기 발송
+        emailService.sendEmailAsync(reserve, member, reserveRequest.performanceScheduleId, reserveRequest.seatNumbers)
+
+        return ReserveResponse.from(reserve, reserveRequest.seatNumbers)
     }
 
-    // 예약 비용 지불
-    private fun calculatePayment(price: Long, seatCount: Int, requestedDiscount: Long, member: Member): Triple<Long, Long, Long> {
+    // 결제 처리
+    private fun processPayment(
+        price: Long, seatCount: Int, requestedDiscount: Long, member: Member
+    ): PaymentResult {
         val totalAmount = price * seatCount
-        val discountAmount = minOf(requestedDiscount, totalAmount, member.reward)
+        val rewardDiscount = minOf(requestedDiscount, totalAmount, member.reward)
+        val finalAmount = totalAmount - rewardDiscount
 
-        return Triple(totalAmount, discountAmount, totalAmount - discountAmount)
+        // 사용자의 금액 부족 시 예외
+        if (finalAmount > member.credit) {
+            throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_ENOUGH_CREDIT)
+        }
+
+        // 사용자의 크레딧 및 리워드 차감
+        member.decreaseCreditAndReward(finalAmount, rewardDiscount)
+        return PaymentResult(totalAmount, rewardDiscount, finalAmount)
     }
 
     // 예약 취소
     @Transactional
     fun cancelReserve(reserveNumber: String, username: String) {
+        // 1. 에약 정보 조회 ( seat도 fetch join으로 함께 조회 )
         val reserve = reserveRepository.findByReservationNumberWithFetch(reserveNumber)
             ?: throw ReserveException(HttpStatus.NOT_FOUND, ErrorCode.NOT_EXIST_RESERVE_INFO)
 
-        // 1. 예약 취소 + 좌석 상태 변경
+        // 2. 예약 취소 + 좌석 상태 변경
         val seatNumbers = reserve.seatList.map { it.seatNumber }
         reserve.cancel()
         seatService.releaseSeats(reserve.seatList)
@@ -120,13 +111,5 @@ class ReserveService(
     fun getUserReservations(username: String): List<ReserveResponse> {
         return reserveRepository.findByMemberUsernameAndStatus(username, ReserveStatus.RESERVED)
             .map(ReserveResponse::from)
-    }
-
-    // 결제 가능 여부 파악
-    private fun isPayable(
-        paymentAmount: Long,
-        currentBalance: Long
-    ): Boolean {
-        return paymentAmount <= currentBalance
     }
 }

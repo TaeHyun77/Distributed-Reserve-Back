@@ -139,7 +139,7 @@ export default function (data) {
         BASE_URL + '/reserve',
         JSON.stringify({
             performanceScheduleId: SCHEDULE_ID,
-            reservedSeat: [seatNumber],
+            seatNumbers: [seatNumber],
         }),
         {
             headers: {
