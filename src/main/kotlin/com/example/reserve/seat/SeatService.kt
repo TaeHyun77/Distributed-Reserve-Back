@@ -19,13 +19,11 @@ class SeatService(
 ): Loggable {
 
     // 좌석 예약
-    @Transactional
     fun reserveSeats(seats: List<Seat>, reserve: Reserve) {
         seats.forEach { it.occupy(reserve) }
     }
 
     // 좌석 예약 해제
-    @Transactional
     fun releaseSeats(seats: List<Seat>) {
         seats.forEach { it.release() }
     }

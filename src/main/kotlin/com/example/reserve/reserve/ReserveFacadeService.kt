@@ -20,7 +20,7 @@ class ReserveFacadeService(
     ): ResponseEntity<String> {
 
         // 여러 좌석에 대한 lock key
-        val lockKeys: List<String> = reserveRequest.reservedSeat
+        val lockKeys: List<String> = reserveRequest.seatNumbers
             .map { "lock:${reserveRequest.performanceScheduleId}:seat:$it" }
 
         // key에 대한 ( 좌석들에 대한 ) Lock을 걸고 예약 실행 후 멱등성 저장

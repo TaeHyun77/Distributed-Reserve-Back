@@ -71,7 +71,7 @@ export default function () {
         BASE_URL + '/reserve',
         JSON.stringify({
             performanceScheduleId: parseInt(SCHEDULE_ID),
-            reservedSeat: ['T1'],
+            seatNumbers: ['T1'],
         }),
         {
             headers: {

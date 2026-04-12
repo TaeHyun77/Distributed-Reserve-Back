@@ -10,7 +10,7 @@ globs:
 ```
 POST /reserve (idempotency-key 헤더 필수)
   → ReserveFacadeService.reserveSeat()
-    → lockKeys = reservedSeat.map { "lock:{scheduleId}:seat:{seatNumber}" }
+    → lockKeys = seatNumbers.map { "lock:{scheduleId}:seat:{seatNumber}" }
     → acquireMultiLockAndRun(lockKeys)      # Redis 분산 락
     → idempotencyService.execute()           # 멱등성 체크
     → ReserveService.reserve()

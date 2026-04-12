@@ -8,7 +8,7 @@ data class ReserveResponse (
 
     val reservedBy: String,
 
-    val reservedSeat: List<String>,
+    val seatNumbers: List<String>,
 
     val totalAmount: Long,
 
@@ -26,7 +26,7 @@ data class ReserveResponse (
             return ReserveResponse(
                 reservationNumber = reserve.reservationNumber,
                 reservedBy = reserve.member.username,
-                reservedSeat = seatNumbers,
+                seatNumbers = seatNumbers,
                 totalAmount = reserve.totalAmount,
                 rewardDiscountAmount = reserve.rewardDiscountAmount,
                 finalAmount = reserve.finalAmount,
