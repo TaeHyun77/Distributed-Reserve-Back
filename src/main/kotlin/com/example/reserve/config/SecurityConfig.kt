@@ -60,10 +60,9 @@ class SecurityConfig(
                     // 인증/토큰
                     .requestMatchers("/reserve/login", "/reserve/logout", "/reserve/reToken").permitAll()
 
-                    // 회원가입, 유효성 검사, 이메일 인증
+                    // 회원가입, 유효성 검사
                     .requestMatchers(HttpMethod.POST, "/reserve/member/create").permitAll()
                     .requestMatchers(HttpMethod.GET, "/reserve/member/check/validation/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/reserve/member/email/**").permitAll()
 
                     // 공연/좌석 조회 (읽기만 공개)
                     .requestMatchers(HttpMethod.GET, "/reserve/venue/get/list").permitAll()

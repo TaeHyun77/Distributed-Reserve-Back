@@ -62,8 +62,8 @@ class ReserveService(
         )
         seatService.reserveSeats(seats, reserve)
 
-        // 예약 확인 이메일 비동기 발송
-        emailService.sendEmailAsync(reserve, member, reserveRequest.performanceScheduleId, reserveRequest.seatNumbers)
+        // 예약 확인 이메일 발송 (커밋 후 비동기 발송)
+        emailService.publishReservationEmail(reserve, member, reserveRequest.performanceScheduleId, reserveRequest.seatNumbers)
 
         return ReserveResponse.from(reserve, reserveRequest.seatNumbers)
     }
@@ -102,8 +102,8 @@ class ReserveService(
         val member = memberService.getMemberByUsernameWithLock(username)
         member.increaseCreditAndReward(reserve.finalAmount, reserve.rewardDiscountAmount)
 
-        // 3. 취소 확인 이메일 발송
-        emailService.sendEmailAsync(reserve, member, reserve.performanceScheduleId, seatNumbers)
+        // 3. 취소 확인 이메일 발송 (커밋 후 비동기 발송)
+        emailService.publishReservationEmail(reserve, member, reserve.performanceScheduleId, seatNumbers)
     }
 
     // 사용자의 예약 내역 반환

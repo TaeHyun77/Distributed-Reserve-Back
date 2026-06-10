@@ -52,12 +52,5 @@ enum class ErrorCode (
     // AUTH
     UNAUTHORIZED_ACCESS("UNAUTHORIZED_ACCESS", "해당 작업에 대한 권한이 없습니다."),
 
-    LOGIN_FAILED("LOGIN_FAILED", "아이디 또는 비밀번호가 올바르지 않습니다."),
-
-    // EMAIL VERIFICATION
-    EMAIL_NOT_VERIFIED("EMAIL_NOT_VERIFIED", "이메일 인증이 완료되지 않았습니다."),
-
-    INVALID_VERIFICATION_CODE("INVALID_VERIFICATION_CODE", "인증번호가 올바르지 않습니다."),
-
-    VERIFICATION_CODE_EXPIRED("VERIFICATION_CODE_EXPIRED", "인증번호가 만료되었습니다.");
+    LOGIN_FAILED("LOGIN_FAILED", "아이디 또는 비밀번호가 올바르지 않습니다.");
 }
