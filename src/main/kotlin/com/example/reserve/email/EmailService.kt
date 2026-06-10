@@ -7,6 +7,7 @@ import com.example.reserve.performanceSchedule.PerformanceScheduleService
 import com.example.reserve.reserve.Reserve
 import com.example.reserve.reserve.ReserveStatus
 import jakarta.mail.internet.MimeMessage
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.scheduling.annotation.Async
@@ -20,46 +21,44 @@ import java.time.format.DateTimeFormatter
 class EmailService(
     private val mailSender: JavaMailSender,
     private val templateEngine: TemplateEngine,
-    private val performanceScheduleService: PerformanceScheduleService
+    private val performanceScheduleService: PerformanceScheduleService,
+    private val applicationEventPublisher: ApplicationEventPublisher
 ) : Loggable {
 
     companion object {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     }
 
-    // 이메일 데이터 조립 및 비동기 발송
-    fun sendEmailAsync(
+    // 이메일 데이터 조립 후 발송 이벤트 발행 ( 실제 발송은 커밋 후 비동기 )
+    // 트랜잭션 안에서 호출되어야 한다 (lazy 연관 접근 + AFTER_COMMIT 발화 조건)
+    fun publishReservationEmail(
         reserve: Reserve,
         member: Member,
         performanceScheduleId: Long,
         seatNumbers: List<String>
     ) {
-        val performanceSchedule = performanceScheduleService.getPerformanceSchedule(performanceScheduleId);
+        val performanceSchedule = performanceScheduleService.getPerformanceSchedule(performanceScheduleId)
 
-        try {
-            sendReservationEmail(
-                ReservationEmailData(
-                    toEmail = member.email,
-                    memberName = member.name,
-                    reservationNumber = reserve.reservationNumber,
-                    status = reserve.status,
-                    totalAmount = reserve.totalAmount,
-                    rewardDiscountAmount = reserve.rewardDiscountAmount,
-                    finalAmount = reserve.finalAmount,
-                    seatNumbers = seatNumbers,
-                    performanceTitle = performanceSchedule.performance.title,
-                    performanceType = performanceSchedule.performance.type,
-                    venueName = performanceSchedule.venue.name,
-                    venueLocation = performanceSchedule.venue.location,
-                    startTime = performanceSchedule.startTime,
-                    endTime = performanceSchedule.endTime,
-                    reservedAt = reserve.createdAt,
-                    cancelledAt = reserve.cancelledAt
-                )
-            )
-        } catch (e: Exception) {
-            log.error(e) { "이메일 발송 요청 실패 - 예약번호: ${reserve.reservationNumber}" }
-        }
+        val data = ReservationEmailData(
+            toEmail = member.email,
+            memberName = member.name,
+            reservationNumber = reserve.reservationNumber,
+            status = reserve.status,
+            totalAmount = reserve.totalAmount,
+            rewardDiscountAmount = reserve.rewardDiscountAmount,
+            finalAmount = reserve.finalAmount,
+            seatNumbers = seatNumbers,
+            performanceTitle = performanceSchedule.performance.title,
+            performanceType = performanceSchedule.performance.type,
+            venueName = performanceSchedule.venue.name,
+            venueLocation = performanceSchedule.venue.location,
+            startTime = performanceSchedule.startTime,
+            endTime = performanceSchedule.endTime,
+            reservedAt = reserve.createdAt,
+            cancelledAt = reserve.cancelledAt
+        )
+
+        applicationEventPublisher.publishEvent(ReservationEmailEvent(data))
     }
 
     // 예약/취소 확인 이메일 비동기 발송
@@ -83,27 +82,6 @@ class EmailService(
             log.info { "이메일 발송 완료 - 수신: ${data.toEmail}, 예약번호: ${data.reservationNumber}" }
         } catch (e: Exception) {
             log.error(e) { "이메일 발송 실패 - 수신: ${data.toEmail}, 예약번호: ${data.reservationNumber}" }
-        }
-    }
-
-    // 인증번호 이메일 비동기 발송
-    @Async("emailTaskExecutor")
-    fun sendVerificationCodeEmail(email: String, code: String) {
-        try {
-            val context = Context()
-            context.setVariable("code", code)
-            val body = templateEngine.process("verification-email", context)
-
-            val message: MimeMessage = mailSender.createMimeMessage()
-            val helper = MimeMessageHelper(message, false, "UTF-8")
-            helper.setTo(email)
-            helper.setSubject("[예약 시스템] 이메일 인증번호")
-            helper.setText(body, true)
-
-            mailSender.send(message)
-            log.info { "인증번호 이메일 발송 완료 - 수신: $email" }
-        } catch (e: Exception) {
-            log.error(e) { "인증번호 이메일 발송 실패 - 수신: $email" }
         }
     }
 
