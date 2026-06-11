@@ -35,6 +35,11 @@ dependencies {
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+	// Testcontainers (실제 MySQL 기반 통합 테스트 - 비관적 락/멱등성/동시성 충실 검증)
+	testImplementation("org.springframework.boot:spring-boot-testcontainers")
+	testImplementation("org.testcontainers:junit-jupiter")
+	testImplementation("org.testcontainers:mysql")
+
 	// Mysql 의존성
 	implementation("mysql:mysql-connector-java:8.0.33")
 
