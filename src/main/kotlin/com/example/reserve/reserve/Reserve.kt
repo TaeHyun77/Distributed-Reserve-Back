@@ -17,6 +17,7 @@ class Reserve(
     val id: Long? = null,
 
     // 예약 번호
+    @Column(name = "reservation_number", unique = true)
     val reservationNumber: String,
 
     // 원가

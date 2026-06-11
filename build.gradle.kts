@@ -56,18 +56,12 @@ dependencies {
 	kapt("jakarta.annotation:jakarta.annotation-api")
 	kapt("jakarta.persistence:jakarta.persistence-api")
 
-	// redis
-	implementation("org.springframework.boot:spring-boot-starter-data-redis")
-
 	// 이메일 발송
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 
 	// 이메일 HTML 템플릿
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
-
-	// Redisson 라이브러리 의존성
-	implementation("org.redisson:redisson-spring-boot-starter:3.27.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
 

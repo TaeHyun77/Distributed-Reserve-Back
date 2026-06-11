@@ -3,6 +3,7 @@ package com.example.reserve.email
 import com.example.reserve.config.Loggable
 import com.example.reserve.email.dto.ReservationEmailData
 import com.example.reserve.member.Member
+import com.example.reserve.performanceSchedule.PerformanceSchedule
 import com.example.reserve.performanceSchedule.PerformanceScheduleService
 import com.example.reserve.reserve.Reserve
 import com.example.reserve.reserve.ReserveStatus
@@ -34,11 +35,9 @@ class EmailService(
     fun publishReservationEmail(
         reserve: Reserve,
         member: Member,
-        performanceScheduleId: Long,
+        performanceSchedule: PerformanceSchedule,
         seatNumbers: List<String>
     ) {
-        val performanceSchedule = performanceScheduleService.getPerformanceSchedule(performanceScheduleId)
-
         val data = ReservationEmailData(
             toEmail = member.email,
             memberName = member.name,
