@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.server.reactive.ServerHttpRequest
 
-const val REDISSON_HOST_PREFIX: String = "redis://"
 private val log = KotlinLogging.logger {}
 
 fun createCookie(key: String, value: String): Cookie {

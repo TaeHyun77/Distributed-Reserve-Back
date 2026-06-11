@@ -34,20 +34,23 @@ enum class ErrorCode (
     // RESERVE
     SEAT_ALREADY_RESERVED("SEAT_ALREADY_RESERVED", "이미 예약된 좌석입니다."),
 
+    EMPTY_SEAT_NUMBERS("EMPTY_SEAT_NUMBERS", "좌석 번호가 비어있습니다."),
+
+    DUPLICATED_SEAT_NUMBERS("DUPLICATED_SEAT_NUMBERS", "중복된 좌석 번호가 존재합니다."),
+
+    INVALID_REWARD_DISCOUNT_AMOUNT("INVALID_REWARD_DISCOUNT_AMOUNT", "리워드 할인 금액은 0 이상이어야 합니다."),
+
     NOT_ENOUGH_CREDIT("NOT_ENOUGH_CREDIT", "보유 금액이 부족합니다."),
 
     ALREADY_CANCELLED("ALREADY_CANCELLED", "이미 취소된 예약 내역입니다."),
+
+    CANCEL_NOT_ALLOWED_AFTER_START("CANCEL_NOT_ALLOWED_AFTER_START", "공연 시작 이후에는 취소할 수 없습니다."),
 
 
     // JOIN
     INVALID_USERNAME("INVALID_USERNAME", "유효하지 않은 username 값 입니다."),
 
     DUPLICATED_USERNAME("DUPLICATED_USERNAME", "중복된 username 값 입니다."),
-
-    // ECT
-    FAILED_TO_ACQUIRED_LOCK("REDIS_FAILED_TO_ACQUIRED_LOCK", "레디스에서 Lock을 획득 실패"),
-
-    NOT_EXIST_LOCK_KEY("REDIS_NOT_EXIST_LOCK_KEY", "레디스 lock 키가 존재하지 않습니다."),
 
     // AUTH
     UNAUTHORIZED_ACCESS("UNAUTHORIZED_ACCESS", "해당 작업에 대한 권한이 없습니다."),

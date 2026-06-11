@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/reserve")
 @RestController
 class ReserveController(
-    private val reserveFacadeService: ReserveFacadeService,
+    private val reserveApplicationService: ReserveApplicationService,
     private val reserveService: ReserveService
 ): Loggable {
 
@@ -35,7 +35,9 @@ class ReserveController(
         val idempotencyKey: String = httpRequest.getHeader("idempotency-key")
             ?: throw ReserveException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_EXIST_IN_HEADER_IDEMPOTENCY_KEY)
 
-        return reserveFacadeService.reserveSeat(reserveRequest, userDetails.username, idempotencyKey)
+        reserveRequest.validate()
+
+        return reserveApplicationService.reserveSeat(reserveRequest, userDetails.username, idempotencyKey)
     }
 
     // 예약 취소

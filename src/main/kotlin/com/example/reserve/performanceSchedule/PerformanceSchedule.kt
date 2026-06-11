@@ -1,6 +1,8 @@
 package com.example.reserve.performanceSchedule
 
 import com.example.reserve.performance.Performance
+import com.example.reserve.reserveException.ErrorCode
+import com.example.reserve.reserveException.ReserveException
 import com.example.reserve.venue.Venue
 import com.example.reserve.seat.Seat
 import jakarta.persistence.CascadeType
@@ -13,6 +15,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
+import org.springframework.http.HttpStatus
 import java.time.LocalDateTime
 
 @Entity
@@ -36,4 +39,12 @@ class PerformanceSchedule(
     val startTime: LocalDateTime,
 
     val endTime: LocalDateTime
-)
+) {
+
+    // 공연 시작 이후에는 취소 불가 ( 시작 직전까지는 허용 )
+    fun validateCancellable() {
+        if (!LocalDateTime.now().isBefore(startTime)) {
+            throw ReserveException(HttpStatus.CONFLICT, ErrorCode.CANCEL_NOT_ALLOWED_AFTER_START)
+        }
+    }
+}

@@ -1,11 +1,9 @@
 package com.example.reserve.member
 
 import com.example.reserve.config.Loggable
-import com.example.reserve.idempotency.IdempotencyService
 import com.example.reserve.member.dto.MemberRequest
 import com.example.reserve.member.dto.MemberResponse
 import com.example.reserve.member.dto.MemberRewardResponse
-import com.example.reserve.redis.lock.RedisLockUtil
 import com.example.reserve.reserveException.ErrorCode
 import com.example.reserve.reserveException.ReserveException
 import org.springframework.http.HttpStatus
