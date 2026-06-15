@@ -36,7 +36,9 @@ import java.util.Properties
  * - 동시성 테스트는 스레드별 실제 커밋이 필요하므로 @Transactional 롤백을 쓰지 않고, 매 테스트 전 수동으로 전체 삭제 진행
  * - JavaMailSender는 mock으로 대체해 실제 SMTP 연결을 차단
  */
-@SpringBootTest
+// actuator(부하 테스트용 의존성) 의 mail HealthContributor 가 테스트의 mock JavaMailSender 와 충돌해
+// 컨텍스트 로딩이 실패하므로, 테스트에서만 mail health 체크를 끈다 ( 운영/loadtest 는 실제 sender 라 무영향 ).
+@SpringBootTest(properties = ["management.health.mail.enabled=false"])
 abstract class IntegrationTestSupport {
 
     companion object {
