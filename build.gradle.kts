@@ -28,6 +28,9 @@ dependencies {
 	// mvc
 	implementation("org.springframework.boot:spring-boot-starter-web")
 
+	// 부하 테스트 관측용 (Hikari/Tomcat/JVM 메트릭 노출) - loadtest 프로파일에서만 엔드포인트 노출
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")

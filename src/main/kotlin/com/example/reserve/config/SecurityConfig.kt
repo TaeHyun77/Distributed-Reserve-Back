@@ -57,6 +57,9 @@ class SecurityConfig(
                     // 에러 페이지
                     .requestMatchers("/error").permitAll()
 
+                    // 부하 테스트 관측용 actuator ( 노출 범위는 management.endpoints 설정으로 health,metrics 로 제한됨 )
+                    .requestMatchers("/actuator/health", "/actuator/metrics/**").permitAll()
+
                     // 인증/토큰
                     .requestMatchers("/reserve/login", "/reserve/logout", "/reserve/reToken").permitAll()
 
