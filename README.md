@@ -8,16 +8,6 @@
 
 - 예약, 예약 취소, 리워드 지급 과정에서 회원 자원( 크레딧, 리워드 )에 DB 비관적 락을 적용하여 정합성을 보장하고, 예약 취소와 리워드 지급은 상태 체크( 예약 상태, 지급 일자)를 통해 멱등성을 확보하였습니다.<br><br>
 
-<p>Front 리포지토리<br>
-  
-https://github.com/TaeHyun77/reserve-project-front.git
-</p><br>
-
-<p>개발 과정 블로그<br>
-  
-https://velog.io/@ayeah77/series/%EC%98%88%EC%95%BD-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8
-</p><br>
-
 ### 기술 스택
 ---
 Backend : SpringBoot, Spring Data JPA, Kotlin
@@ -27,6 +17,10 @@ Frontend : React, JavaScript
 Database/Cache : MySQL
 
 Etc : SMTP<br><br>
+
+### 아키텍처 
+---
+
 
 ### 동시성 이슈
 ---
