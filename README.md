@@ -23,6 +23,14 @@ Etc : SMTP<br><br>
 <p align="center">
 <img width="800" height="400" alt="Image" src="https://github.com/user-attachments/assets/07f3176c-92f6-4309-abde-6fb494d7293b" /><br>
 
+**예약 진행 플로우**
+
+```
+대기열 통과 → 좌석 선택(5분) → 결제창 이동 → 좌석 임시 점유(5분) → 결제 성공 → 예약 확정
+                                          └─ 취소/만료 → 좌석 반납 → 홈 화면
+```
+<br>
+
 ### 동시성 이슈
 ---
 분산 서버 환경에서는 여러 인스턴스가 동시에 동일한 자원에 접근하거나 변경하면서 동시성 문제가 발생할 수 있습니다.
