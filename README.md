@@ -21,7 +21,7 @@ Etc : SMTP<br><br>
 ### 아키텍처 
 ---
 <p align="center">
-<img width="800" height="400" alt="Image" src="https://github.com/user-attachments/assets/07f3176c-92f6-4309-abde-6fb494d7293b" /><br>
+<img width="800" height="400" alt="Image" src="https://github.com/user-attachments/assets/07f3176c-92f6-4309-abde-6fb494d7293b" /><br><br>
 
 **예약 진행 플로우**
 
