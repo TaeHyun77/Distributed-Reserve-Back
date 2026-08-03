@@ -20,7 +20,8 @@ Etc : SMTP<br><br>
 
 ### 아키텍처 
 ---
-<img width="574" height="273" alt="Image" src="https://github.com/user-attachments/assets/07f3176c-92f6-4309-abde-6fb494d7293b" /><br>
+<p align="center">
+<img width="800" height="300" alt="Image" src="https://github.com/user-attachments/assets/07f3176c-92f6-4309-abde-6fb494d7293b" /><br>
 
 ### 동시성 이슈
 ---
