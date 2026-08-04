@@ -1,5 +1,6 @@
 package com.example.reserve.support
 
+import com.example.reserve.email.outbox.EmailOutboxRepository
 import com.example.reserve.idempotency.IdempotencyRepository
 import com.example.reserve.member.Member
 import com.example.reserve.member.MemberRepository
@@ -39,7 +40,11 @@ import java.util.Properties
  */
 // actuator(부하 테스트용 의존성) 의 mail HealthContributor 가 테스트의 mock JavaMailSender 와 충돌해
 // 컨텍스트 로딩이 실패하므로, 테스트에서만 mail health 체크를 끈다 ( 운영/loadtest 는 실제 sender 라 무영향 ).
-@SpringBootTest(properties = ["management.health.mail.enabled=false"])
+@SpringBootTest(properties = [
+    "management.health.mail.enabled=false",
+    // 아웃박스 스케줄러를 꺼 결정론 확보 — 테스트는 dispatchBatch()를 직접 호출한다.
+    "email.outbox.scheduler.enabled=false",
+])
 abstract class IntegrationTestSupport {
 
     companion object {
@@ -55,6 +60,7 @@ abstract class IntegrationTestSupport {
     @Autowired protected lateinit var memberRepository: MemberRepository
     @Autowired protected lateinit var reserveRepository: ReserveRepository
     @Autowired protected lateinit var idempotencyRepository: IdempotencyRepository
+    @Autowired protected lateinit var emailOutboxRepository: EmailOutboxRepository
 
     @Autowired private lateinit var transactionManager: PlatformTransactionManager
 
@@ -69,6 +75,7 @@ abstract class IntegrationTestSupport {
         given(mailSender.createMimeMessage()).willAnswer { MimeMessage(Session.getInstance(Properties())) }
 
         // FK 안전 순서로 전체 삭제 (롤백 대신 수동 정리)
+        emailOutboxRepository.deleteAll()
         seatRepository.deleteAll()
         reserveRepository.deleteAll()
         idempotencyRepository.deleteAll()

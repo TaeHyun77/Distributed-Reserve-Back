@@ -1,7 +1,8 @@
 package com.example.reserve.reserve
 
 import com.example.reserve.config.Loggable
-import com.example.reserve.email.EmailService
+import com.example.reserve.email.dto.ReservationEmailData
+import com.example.reserve.email.outbox.EmailOutboxService
 import com.example.reserve.member.Member
 import com.example.reserve.member.MemberService
 import com.example.reserve.performanceSchedule.PerformanceScheduleService
@@ -25,7 +26,7 @@ class ReserveService(
     private val seatService: SeatService,
     private val performanceScheduleService: PerformanceScheduleService,
     private val memberService: MemberService,
-    private val emailService: EmailService
+    private val emailOutboxService: EmailOutboxService
 ) : Loggable {
 
     companion object {
@@ -77,8 +78,10 @@ class ReserveService(
         // 5. 좌석 확정 ( 내 유효 홀드만 원자적 RESERVED — 만료/탈취 시 예외 → 결제 롤백 )
         seatService.confirmSeats(reserve, member, request.performanceScheduleId, request.seatNumbers)
 
-        // 6. 예약 확인 이메일 발송 (커밋 후 비동기 발송)
-        emailService.publishReservationEmail(reserve, member, performanceSchedule, request.seatNumbers)
+        // 6. 예약 확인 이메일 — 발송 의도를 같은 커밋으로 아웃박스에 적재 (실제 발송은 워커가 처리)
+        emailOutboxService.enqueue(
+            ReservationEmailData.from(reserve, member, performanceSchedule, request.seatNumbers)
+        )
 
         return ReserveResponse.from(reserve, request.seatNumbers)
     }
@@ -133,8 +136,10 @@ class ReserveService(
         reserve.cancel()
         seatService.releaseSeats(reserve.seatList)
 
-        // 6. 취소 확인 이메일 발송 (커밋 후 비동기 발송)
-        emailService.publishReservationEmail(reserve, member, performanceSchedule, seatNumbers)
+        // 6. 취소 확인 이메일 — 발송 의도를 같은 커밋으로 아웃박스에 적재
+        emailOutboxService.enqueue(
+            ReservationEmailData.from(reserve, member, performanceSchedule, seatNumbers)
+        )
     }
 
     // 사용자의 예약 내역 반환
