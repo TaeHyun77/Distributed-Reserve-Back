@@ -36,7 +36,7 @@ import java.time.LocalDateTime
 
 // 운영의 Gmail SMTP 발송을 무력화한다.
 // 발송(send)만 no-op 으로 두어 외부 의존/스로틀/메모리 증가를 제거하고,
-// MimeMessage 생성 + Thymeleaf 템플릿 렌더링 같은 @Async 경로의 실제 CPU 비용은 그대로 측정되게 한다.
+// MimeMessage 생성 + Thymeleaf 렌더링 같은 아웃박스 워커 경로의 실제 CPU 비용은 그대로 측정되게 한다.
 @Configuration
 @Profile("loadtest")
 class LoadTestMailConfig {

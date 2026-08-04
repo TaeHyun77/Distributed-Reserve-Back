@@ -2,86 +2,44 @@ package com.example.reserve.email
 
 import com.example.reserve.config.Loggable
 import com.example.reserve.email.dto.ReservationEmailData
-import com.example.reserve.member.Member
-import com.example.reserve.performanceSchedule.PerformanceSchedule
-import com.example.reserve.performanceSchedule.PerformanceScheduleService
-import com.example.reserve.reserve.Reserve
 import com.example.reserve.reserve.ReserveStatus
 import jakarta.mail.internet.MimeMessage
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
-import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import java.time.format.DateTimeFormatter
 
-// 이메일 발송 서비스
+// 이메일 발송 서비스 — 실제 SMTP 발송만 담당한다.
+// 아웃박스 워커가 트랜잭션 안에서 동기 호출하므로, 실패는 삼키지 않고 전파해 워커가 재시도를 결정하게 한다.
 @Service
 class EmailService(
     private val mailSender: JavaMailSender,
-    private val templateEngine: TemplateEngine,
-    private val performanceScheduleService: PerformanceScheduleService,
-    private val applicationEventPublisher: ApplicationEventPublisher
+    private val templateEngine: TemplateEngine
 ) : Loggable {
 
     companion object {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     }
 
-    // 이메일 데이터 조립 후 발송 이벤트 발행 ( 실제 발송은 커밋 후 비동기 )
-    // 트랜잭션 안에서 호출되어야 한다 (lazy 연관 접근 + AFTER_COMMIT 발화 조건)
-    fun publishReservationEmail(
-        reserve: Reserve,
-        member: Member,
-        performanceSchedule: PerformanceSchedule,
-        seatNumbers: List<String>
-    ) {
-        val data = ReservationEmailData(
-            toEmail = member.email,
-            memberName = member.name,
-            reservationNumber = reserve.reservationNumber,
-            status = reserve.status,
-            totalAmount = reserve.totalAmount,
-            rewardDiscountAmount = reserve.rewardDiscountAmount,
-            finalAmount = reserve.finalAmount,
-            seatNumbers = seatNumbers,
-            performanceTitle = performanceSchedule.performance.title,
-            performanceType = performanceSchedule.performance.type,
-            venueName = performanceSchedule.venue.name,
-            venueLocation = performanceSchedule.venue.location,
-            startTime = performanceSchedule.startTime,
-            endTime = performanceSchedule.endTime,
-            reservedAt = reserve.createdAt,
-            cancelledAt = reserve.cancelledAt
-        )
-
-        applicationEventPublisher.publishEvent(ReservationEmailEvent(data))
-    }
-
-    // 예약/취소 확인 이메일 비동기 발송
-    @Async("emailTaskExecutor")
+    // 예약/취소 확인 이메일 발송 (실패 시 예외 전파)
     fun sendReservationEmail(data: ReservationEmailData) {
-        try {
-            val subject = when (data.status) {
-                ReserveStatus.RESERVED -> "[예약 확인] ${data.performanceTitle} - ${data.reservationNumber}"
-                ReserveStatus.CANCELLED -> "[예약 취소] ${data.performanceTitle} - ${data.reservationNumber}"
-            }
-
-            val body = buildEmailBody(data)
-
-            val message: MimeMessage = mailSender.createMimeMessage()
-            val helper = MimeMessageHelper(message, false, "UTF-8")
-            helper.setTo(data.toEmail)
-            helper.setSubject(subject)
-            helper.setText(body, true)
-
-            mailSender.send(message)
-            log.info { "이메일 발송 완료 - 수신: ${data.toEmail}, 예약번호: ${data.reservationNumber}" }
-        } catch (e: Exception) {
-            log.error(e) { "이메일 발송 실패 - 수신: ${data.toEmail}, 예약번호: ${data.reservationNumber}" }
+        val subject = when (data.status) {
+            ReserveStatus.RESERVED -> "[예약 확인] ${data.performanceTitle} - ${data.reservationNumber}"
+            ReserveStatus.CANCELLED -> "[예약 취소] ${data.performanceTitle} - ${data.reservationNumber}"
         }
+
+        val body = buildEmailBody(data)
+
+        val message: MimeMessage = mailSender.createMimeMessage()
+        val helper = MimeMessageHelper(message, false, "UTF-8")
+        helper.setTo(data.toEmail)
+        helper.setSubject(subject)
+        helper.setText(body, true)
+
+        mailSender.send(message)
+        log.info { "이메일 발송 완료 - 수신: ${data.toEmail}, 예약번호: ${data.reservationNumber}" }
     }
 
     // Thymeleaf 템플릿으로 HTML 본문 생성

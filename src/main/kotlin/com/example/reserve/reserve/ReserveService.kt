@@ -1,10 +1,13 @@
 package com.example.reserve.reserve
 
 import com.example.reserve.config.Loggable
-import com.example.reserve.email.EmailService
+import com.example.reserve.email.dto.ReservationEmailData
+import com.example.reserve.email.outbox.EmailOutboxService
 import com.example.reserve.member.Member
 import com.example.reserve.member.MemberService
 import com.example.reserve.performanceSchedule.PerformanceScheduleService
+import com.example.reserve.reserve.dto.HoldRequest
+import com.example.reserve.reserve.dto.HoldResponse
 import com.example.reserve.reserve.dto.PaymentResult
 import com.example.reserve.reserve.dto.ReserveRequest
 import com.example.reserve.reserve.dto.ReserveResponse
@@ -15,6 +18,7 @@ import com.example.reserve.seat.SeatService
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class ReserveService(
@@ -22,45 +26,71 @@ class ReserveService(
     private val seatService: SeatService,
     private val performanceScheduleService: PerformanceScheduleService,
     private val memberService: MemberService,
-    private val emailService: EmailService
+    private val emailOutboxService: EmailOutboxService
 ) : Loggable {
 
-    @Transactional
-    fun reserve(reserveRequest: ReserveRequest, username: String): ReserveResponse {
-        // 1. 예약하려는 공연 스케쥴 정보 조회
-        val performanceSchedule = performanceScheduleService.getPerformanceSchedule(reserveRequest.performanceScheduleId)
+    companion object {
+        // 좌석 홀드 유효시간(분) — 결제창 이동 순간부터 이 시간 안에 confirm 해야 한다
+        const val HOLD_TTL_MINUTES = 5L
+    }
 
-        // 2. 예약하려는 사용자 비관적 락 잡음 ( credit/reward 등 사용자 자원에 대한 동시성 문제 방지 )
+    // 1단계: 좌석 홀드 ( 결제창 이동 시점 ). 크레딧 차감 없음, 회원 락 없음.
+    @Transactional
+    fun hold(request: HoldRequest, username: String): HoldResponse {
+        val member = memberService.getMemberByUsername(username)
+        val heldUntil = LocalDateTime.now().plusMinutes(HOLD_TTL_MINUTES)
+
+        seatService.holdSeats(member, request.performanceScheduleId, request.seatNumbers, heldUntil)
+
+        return HoldResponse(request.seatNumbers, heldUntil)
+    }
+
+    // 2단계: 결제 확정 ( 결제창 최종 결제 시점 ). 결제 후 내 유효 홀드를 RESERVED 로 확정.
+    @Transactional
+    fun confirm(request: ReserveRequest, username: String): ReserveResponse {
+        // 1. 공연 스케줄 정보 조회
+        val performanceSchedule = performanceScheduleService.getPerformanceSchedule(request.performanceScheduleId)
+
+        // 2. 결제 대상 사용자 비관적 락 ( credit/reward 동시성 방지 )
         val member = memberService.getMemberByUsernameWithLock(username)
 
         // 3. 결제 처리
         val (totalAmount, actualRewardDiscount, finalAmount) = processPayment(
-                performanceSchedule.performance.price,
-                reserveRequest.seatNumbers.size,
-                reserveRequest.rewardDiscountAmount,
-                member
+            performanceSchedule.performance.price,
+            request.seatNumbers.size,
+            request.rewardDiscountAmount,
+            member
         )
 
         // 4. 예약 생성 ( IDENTITY → 즉시 INSERT로 reserve_id 확보 )
         val reserve = reserveRepository.save(
             Reserve(
-                reservationNumber = reserveRequest.reservationNumber,
+                reservationNumber = request.reservationNumber,
                 totalAmount = totalAmount,
                 rewardDiscountAmount = actualRewardDiscount,
                 finalAmount = finalAmount,
-                performanceScheduleId = reserveRequest.performanceScheduleId,
+                performanceScheduleId = request.performanceScheduleId,
                 member = member,
                 status = ReserveStatus.RESERVED
             )
         )
 
-        // 5. 좌석 선점 ( 조건부 UPDATE, 락 보유 구간 최소화를 위해 말미에 실행 )
-        seatService.claimSeats(reserve, reserveRequest.performanceScheduleId, reserveRequest.seatNumbers)
+        // 5. 좌석 확정 ( 내 유효 홀드만 원자적 RESERVED — 만료/탈취 시 예외 → 결제 롤백 )
+        seatService.confirmSeats(reserve, member, request.performanceScheduleId, request.seatNumbers)
 
-        // 6. 예약 확인 이메일 발송 (커밋 후 비동기 발송)
-        emailService.publishReservationEmail(reserve, member, performanceSchedule, reserveRequest.seatNumbers)
+        // 6. 예약 확인 이메일 — 발송 의도를 같은 커밋으로 아웃박스에 적재 (실제 발송은 워커가 처리)
+        emailOutboxService.enqueue(
+            ReservationEmailData.from(reserve, member, performanceSchedule, request.seatNumbers)
+        )
 
-        return ReserveResponse.from(reserve, reserveRequest.seatNumbers)
+        return ReserveResponse.from(reserve, request.seatNumbers)
+    }
+
+    // 홀드 즉시 해제 ( 결제창 이탈·취소 시점 ). 내 홀드만 FREE 로 되돌림.
+    @Transactional
+    fun release(request: HoldRequest, username: String) {
+        val member = memberService.getMemberByUsername(username)
+        seatService.releaseHeldSeats(member, request.performanceScheduleId, request.seatNumbers)
     }
 
     // 결제 처리
@@ -106,8 +136,10 @@ class ReserveService(
         reserve.cancel()
         seatService.releaseSeats(reserve.seatList)
 
-        // 6. 취소 확인 이메일 발송 (커밋 후 비동기 발송)
-        emailService.publishReservationEmail(reserve, member, performanceSchedule, seatNumbers)
+        // 6. 취소 확인 이메일 — 발송 의도를 같은 커밋으로 아웃박스에 적재
+        emailOutboxService.enqueue(
+            ReservationEmailData.from(reserve, member, performanceSchedule, seatNumbers)
+        )
     }
 
     // 사용자의 예약 내역 반환

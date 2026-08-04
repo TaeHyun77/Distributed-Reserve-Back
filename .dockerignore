@@ -6,3 +6,4 @@ src/main/generated/
 out/
 .git/
 loadtest/results/
+secret.properties

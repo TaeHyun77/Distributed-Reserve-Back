@@ -2,6 +2,8 @@ package com.example.reserve.reserve
 
 import com.example.reserve.config.Loggable
 import com.example.reserve.jwt.CustomUserDetails
+import com.example.reserve.reserve.dto.HoldRequest
+import com.example.reserve.reserve.dto.HoldResponse
 import com.example.reserve.reserve.dto.ReserveRequest
 import com.example.reserve.reserve.dto.ReserveResponse
 import com.example.reserve.reserveException.ErrorCode
@@ -25,9 +27,19 @@ class ReserveController(
     private val reserveService: ReserveService
 ): Loggable {
 
-    // 예약
-    @PostMapping
-    fun reserveSeat(
+    // 1단계: 좌석 홀드 ( 결제창 이동 )
+    @PostMapping("/hold")
+    fun hold(
+        @RequestBody holdRequest: HoldRequest,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): HoldResponse {
+        holdRequest.validate()
+        return reserveService.hold(holdRequest, userDetails.username)
+    }
+
+    // 2단계: 결제 확정 ( 결제창 최종 결제, 멱등성 키 필요 )
+    @PostMapping("/confirm")
+    fun confirm(
         @RequestBody reserveRequest: ReserveRequest,
         @AuthenticationPrincipal userDetails: CustomUserDetails,
         httpRequest: HttpServletRequest
@@ -37,7 +49,18 @@ class ReserveController(
 
         reserveRequest.validate()
 
-        return reserveApplicationService.reserveSeat(reserveRequest, userDetails.username, idempotencyKey)
+        return reserveApplicationService.confirmSeat(reserveRequest, userDetails.username, idempotencyKey)
+    }
+
+    // 홀드 즉시 해제 ( 결제창 이탈 )
+    @PostMapping("/release")
+    fun release(
+        @RequestBody holdRequest: HoldRequest,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): ResponseEntity<Void> {
+        holdRequest.validate()
+        reserveService.release(holdRequest, userDetails.username)
+        return ResponseEntity.noContent().build()
     }
 
     // 예약 취소

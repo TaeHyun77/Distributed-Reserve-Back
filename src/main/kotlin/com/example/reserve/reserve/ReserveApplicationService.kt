@@ -11,16 +11,15 @@ class ReserveApplicationService(
     private val reserveService: ReserveService
 ) {
 
-    fun reserveSeat(
+    // 결제 확정을 멱등성 선점(unique INSERT)으로 감싸 동시 진입을 차단한다.
+    // 좌석 동시 확정은 confirm() 내부 조건부 UPDATE가 보장한다.
+    fun confirmSeat(
         reserveRequest: ReserveRequest,
         username: String,
         idempotencyKey: String
     ): ResponseEntity<String> {
-
-        // 멱등성 선점(unique INSERT)으로 동시 진입을 차단하고 예약 실행
-        // 좌석 동시 점유는 reserve() 내부 조건부 UPDATE가 보장한다
         return idempotencyService.execute(idempotencyKey, "POST") {
-            reserveService.reserve(reserveRequest, username)
+            reserveService.confirm(reserveRequest, username)
         }
     }
 }
