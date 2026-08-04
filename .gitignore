@@ -41,3 +41,6 @@ out/
 
 ### Environment ###
 .env
+
+### 로컬 시크릿 ( 절대 커밋 금지 ) ###
+secret.properties

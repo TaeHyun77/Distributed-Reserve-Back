@@ -34,6 +34,10 @@ enum class ErrorCode (
     // RESERVE
     SEAT_ALREADY_RESERVED("SEAT_ALREADY_RESERVED", "이미 예약된 좌석입니다."),
 
+    SEAT_ALREADY_HELD("SEAT_ALREADY_HELD", "이미 다른 사용자가 선점한 좌석입니다."),
+
+    HOLD_EXPIRED_OR_NOT_OWNED("HOLD_EXPIRED_OR_NOT_OWNED", "좌석 홀드가 만료되었거나 본인의 홀드가 아닙니다."),
+
     EMPTY_SEAT_NUMBERS("EMPTY_SEAT_NUMBERS", "좌석 번호가 비어있습니다."),
 
     DUPLICATED_SEAT_NUMBERS("DUPLICATED_SEAT_NUMBERS", "중복된 좌석 번호가 존재합니다."),
