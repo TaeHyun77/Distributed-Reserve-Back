@@ -55,6 +55,9 @@ Etc : SMTP<br><br>
 
 ### 테스트
 ---
+
+[테스트 과정 블로그](https://velog.io/@ayeah77/series/%EC%98%88%EC%95%BD-%ED%94%84%EB%A1%9C%EC%A0%9C%ED%8A%B8)
+
 **기본 기능 테스트**
 
 - 기본 예약/취소 기능 및 예약 멱등성 검증
@@ -67,4 +70,6 @@ Etc : SMTP<br><br>
 
 - 장시간(Soak) 테스트
 
-- Burst 부하 테스트
+- Burst 부하 테스트<br><br>
+
+[ 부하 테스트 결과 ]
