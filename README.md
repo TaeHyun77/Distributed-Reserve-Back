@@ -22,7 +22,7 @@ Infrastructure : AWS EC2, Docker, Docker Compose
 
 Monitoring : Spring Actuator, Micrometer
 
-Testing : JUnit5, k6
+Test : JUnit5, k6
 
 Etc : SMTP (Spring Mail), Outbox Pattern<br><br>
 
