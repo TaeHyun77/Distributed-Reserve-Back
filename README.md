@@ -62,7 +62,7 @@ Etc : SMTP (Spring Mail), Outbox Pattern<br><br>
 ### 테스트
 ---
 
-[테스트 과정 블로그](https://velog.io/@ayeah77/series/%EC%98%88%EC%95%BD-%ED%94%84%EB%A1%9C%EC%A0%9C%ED%8A%B8)
+[테스트 과정 블로그](https://velog.io/@ayeah77/series/%EC%98%88%EC%95%BD-%ED%94%84%EB%A1%9C%EC%A0%9C%ED%8A%B8)<br><br>
 
 **기본 기능 테스트**
 
