@@ -12,13 +12,19 @@
 
 ### 기술 스택
 ---
-Backend : SpringBoot, Spring Data JPA, Kotlin
+Backend : Kotlin, Spring Boot, Spring MVC, Spring Data JPA, Spring Security
 
 Frontend : React, JavaScript
 
-Database/Cache : MySQL
+Database / Cache : MySQL, Redis
 
-Etc : SMTP<br><br>
+Infrastructure : AWS EC2, Docker, Docker Compose
+
+Monitoring : Spring Actuator, Micrometer
+
+Testing : JUnit5, k6
+
+Etc : SMTP (Spring Mail), Outbox Pattern<br><br>
 
 ### 아키텍처 
 ---
