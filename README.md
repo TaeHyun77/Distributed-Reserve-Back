@@ -85,8 +85,8 @@ Etc : SMTP (Spring Mail), Outbox Pattern<br><br>
 <table>
   <thead>
     <tr>
-      <th width="35%">테스트</th>
-      <th width="65%">목적</th>
+      <th style="width: 200px;">테스트</th>
+      <th style="width: 500px;">목적</th>
     </tr>
   </thead>
   <tbody>
