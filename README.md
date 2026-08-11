@@ -97,7 +97,6 @@ Etc : SMTP (Spring Mail), Outbox Pattern<br><br>
     <tr>
       <td style="background-color: transparent;">소크 테스트</td>
       <td style="background-color: transparent;">확정 N에서 장시간 지속 부하 안정성 검증</td>
-      
     </tr>
     <tr>
       <td style="background-color: transparent;">스파이크 테스트</td>
