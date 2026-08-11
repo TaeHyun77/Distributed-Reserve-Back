@@ -95,36 +95,43 @@ Etc : SMTP (Spring Mail), Outbox Pattern<br><br>
       <td style="background-color: transparent;">처리 가능한 한계점 탐색</td>
     </tr>
     <tr>
-      <td style="background-color: transparent;">매진 시나리오</td>
-      <td style="background-color: transparent;">좌석 경합 시 정합성(이중 예약 여부) 검증</td>
+      <td style="background-color: transparent;">소크 테스트</td>
+      <td style="background-color: transparent;">확정 N에서 장시간 지속 부하 안정성 검증</td>
+      
     </tr>
     <tr>
       <td style="background-color: transparent;">스파이크 테스트</td>
       <td style="background-color: transparent;">순간적인 트래픽 폭증 대응력 검증</td>
     </tr>
     <tr>
-      <td style="background-color: transparent;">소크 테스트</td>
-      <td style="background-color: transparent;">확정 N에서 장시간 지속 부하 안정성 검증</td>
+      <td style="background-color: transparent;">매진 시나리오</td>
+      <td style="background-color: transparent;">좌석 경합 시 정합성(이중 예약 여부) 검증</td>
     </tr>
   </tbody>
 </table>
 
 <br>
 
-1. Closed-loop N 스윕
-   
-   동시 사용자 수(N)를 점진적으로 늘려가며 시스템이 버틸 수 있는 한계점을 찾았습니다. 좌석을 재활용하며 지속 부하를 걸었고, baseline → Projection → 캐싱 → 구역 단위 조회로 개선하며 참가열의 상한을 단계적으로 개선하였습니다.
-
-2. 매진 시나리오
-   
-   N 스윕은 좌석을 재활용해 실제 좌석 소진 상황을 재현하지 못한다는 한계가 있어, 좌석을 재활용하지 않고 10,000석이 매진될 때까지 진행하는 테스트를 추가했습니다. 확정하려는 참가열 규모에서 인기 좌석 경합이 몰려도 이중 예약 없이 정확하게 처리되는지 확인했습니다
-
-3. 스파이크 테스트
-   
-   N 스윕은 부하를 서서히 올렸지만, 실제 티켓 오픈은 순간적으로 몰립니다. 목표 N까지 짧은 시간에 부하를 투입해, 확정하려는 참가열 크기가 순간적인 몰림에도 유지되는지 확인했습니다
-
-4. 소크 테스트
-   
-   N 스윕에서 찾은 참가열 크기가 짧은 구간에서만 유효한 값은 아닌지 확인하기 위해, 확정 N을 기준으로 30분~1시간 동일 부하를 지속하며 시간에 따른 성능 저하나 누수가 없는지 검증했습니다<br><br>
-
 [ 부하 테스트 결론 ]
+
+1. Baseline 진단
+
+   전체 좌석 조회 API를 Pool=10으로 N 스윕한 결과, N=150 부근에서 성능이 급격히 저하됐습니다. DB CPU는 46%로 여유가 있었지만 커넥션 대기가 최대 190개까지 발생해, 병목은 DB가 아닌 커넥션 점유 시간이라고 판단했습니다.
+
+3. DTO Projection
+
+   불필요한 데이터까지 조회하던 구조를 필요한 데이터만 조회하도록 개선해, 병목 지점을 N=500까지 지연시켰습니다.
+
+4. Redis 캐싱
+
+   N=700 이상에서 다시 병목이 발생했습니다. Redis 캐싱으로 읽기 부하를 줄였지만, 병목은 hold/confirm과 같은 쓰기 경로로 이동했습니다.
+
+5. 구역 단위 조회
+
+   10,000석 전체를 조회하던 방식을 약 250석 단위의 구역 조회로 재설계했습니다. Pool=10을 유지한 상태에서도 N=2,000까지 안정적으로 처리할 수 있었습니다.
+
+6. Pool 및 참가열 확정
+
+   콜드/웜 상태에 따라 성능 차이가 큰 것을 확인해 웜 상태를 기준으로 재검증했습니다. N=2,000에서 30분 Soak 테스트를 통과했으며, hold p99 63ms
+
+최종 참가열 규모는 N=2,000으로 확정했습니다. 
