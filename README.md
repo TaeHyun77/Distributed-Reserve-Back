@@ -85,26 +85,26 @@ Etc : SMTP (Spring Mail), Outbox Pattern<br><br>
 <table>
   <thead>
     <tr>
-      <th style="width: 200px;">테스트</th>
-      <th style="width: 500px;">목적</th>
+      <th style="width: 230px; background-color: transparent;">테스트</th>
+      <th style="width: 550px; background-color: transparent;">목적</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>Closed-loop N 스윕</td>
-      <td>처리 가능한 한계점 탐색</td>
+      <td style="background-color: transparent;">Closed-loop N 스윕</td>
+      <td style="background-color: transparent;">처리 가능한 한계점 탐색</td>
     </tr>
     <tr>
-      <td>매진 시나리오</td>
-      <td>좌석 경합 시 정합성(이중 예약 여부) 검증</td>
+      <td style="background-color: transparent;">매진 시나리오</td>
+      <td style="background-color: transparent;">좌석 경합 시 정합성(이중 예약 여부) 검증</td>
     </tr>
     <tr>
-      <td>스파이크 테스트</td>
-      <td>순간적인 트래픽 폭증 대응력 검증</td>
+      <td style="background-color: transparent;">스파이크 테스트</td>
+      <td style="background-color: transparent;">순간적인 트래픽 폭증 대응력 검증</td>
     </tr>
     <tr>
-      <td>소크 테스트</td>
-      <td>확정 N에서 장시간 지속 부하 안정성 검증</td>
+      <td style="background-color: transparent;">소크 테스트</td>
+      <td style="background-color: transparent;">확정 N에서 장시간 지속 부하 안정성 검증</td>
     </tr>
   </tbody>
 </table>
